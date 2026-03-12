@@ -196,7 +196,7 @@ If you're unsure whether something is a security issue or where to report it:
 
 ## Legal
 
-CinePro Core is provided "as is" without warranty. See the [MIT License](../LICENSE) for details.
+CinePro Core is provided "as is" without warranty. See the [PolyForm Noncommercial 1.0 License](../LICENSE) for details.
 
 ---
 

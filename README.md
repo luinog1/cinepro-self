@@ -237,7 +237,7 @@ CinePro Core is designed for **personal and home use only**. Users are responsib
 
 ## 📄 License
 
-MIT © CinePro Organization
+PolyForm Noncommercial 1.0 © CinePro Organization
 
 ---
 

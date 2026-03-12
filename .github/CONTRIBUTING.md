@@ -211,7 +211,7 @@ Documentation improvements are always welcome! This includes:
 
 ## License
 
-By contributing to CinePro Core, you agree that your contributions will be licensed under the MIT License.
+By contributing to CinePro Core, you agree that your contributions will be licensed under the PolyForm Noncommercial 1.0 License.
 
 ---
 
