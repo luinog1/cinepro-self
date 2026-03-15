@@ -8,10 +8,7 @@ import type {
     SubtitleFormat
 } from '@omss/framework';
 import axios from 'axios';
-import {
-    MovieDownloaderResponse,
-    Token
-} from './02moviedownloader.types.js';
+import { MovieDownloaderResponse, Token } from './02moviedownloader.types.js';
 
 export class MovieDownloader extends BaseProvider {
     readonly id = '02moviedownloader';
@@ -46,20 +43,25 @@ export class MovieDownloader extends BaseProvider {
     }
 
     async getToken(media: ProviderMediaObject): Promise<string> {
-        const req = await fetch(this.BASE_URL + "/api/verify-robot", {
-            "headers": {
-                "accept": "*/*",
-                "cache-control": "no-cache",
+        const req = await fetch(this.BASE_URL + '/api/verify-robot', {
+            headers: {
+                accept: '*/*',
+                'cache-control': 'no-cache'
             },
-            "referrer": this.BASE_URL + "/api/download" + (media.type === 'movie' ? "/movie/" + media.tmdbId : "/tv/" + media.tmdbId + media.s + media.e),
-            "body": null,
-            "method": "POST",
+            referrer:
+                this.BASE_URL +
+                '/api/download' +
+                (media.type === 'movie'
+                    ? '/movie/' + media.tmdbId
+                    : '/tv/' + media.tmdbId + media.s + media.e),
+            body: null,
+            method: 'POST'
         });
-        const resp = await req.json() as Token;
+        const resp = (await req.json()) as Token;
         if (resp.success && resp.token) {
             return resp.token;
         } else {
-            throw "no token found..."
+            throw 'no token found...';
         }
     }
 
@@ -74,13 +76,21 @@ export class MovieDownloader extends BaseProvider {
 
             const token = await this.getToken(media);
 
-            const response: MovieDownloaderResponse =
-                await this.fetchPage(pageUrl, token, media);
-            
+            const response: MovieDownloaderResponse = await this.fetchPage(
+                pageUrl,
+                token,
+                media
+            );
+
             // Map to ProviderResult
             return this.mapToProviderResult(response);
         } catch (error) {
-            return this.emptyResult(error instanceof Error ? error.message : 'Failed to process sources', media);
+            return this.emptyResult(
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to process sources',
+                media
+            );
         }
     }
 
@@ -214,7 +224,10 @@ export class MovieDownloader extends BaseProvider {
     ): Promise<any> {
         try {
             const response = await fetch(url, {
-                headers: { accept: 'application/json', "x-session-token": token }
+                headers: {
+                    accept: 'application/json',
+                    'x-session-token': token
+                }
             });
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

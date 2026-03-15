@@ -58,7 +58,7 @@ export interface MovieDownloaderResponse {
 }
 
 export interface Token {
-    success: boolean
-    token: string
-    expiresIn: number
+    success: boolean;
+    token: string;
+    expiresIn: number;
 }
