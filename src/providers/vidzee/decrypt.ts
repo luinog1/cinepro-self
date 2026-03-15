@@ -1,67 +1,54 @@
 import type { StreamUrl } from './vidzee.types.js';
 
-export default async function decrypt(urls: StreamUrl[]): Promise<string[]> {
+const KEY = "YWxvb2tlcGFyYXRoZXdpdGhsYXNzaQ==";
+
+export default async function decrypt(
+    urls: StreamUrl[]
+): Promise<string[]> {
     const results: string[] = [];
 
     try {
         for (const streamurl of urls) {
-            const decoded = Buffer.from(
-                streamurl.link.toString(),
-                'base64'
-            ).toString();
+            // atob(e)
+            const decoded = Buffer.from(streamurl.link, "base64").toString("utf8");
 
-            const [ivBase64, cipherBase64] = decoded.split(':');
+            const [ivBase64, cipherBase64] = decoded.split(":");
+            if (!ivBase64 || !cipherBase64) continue;
 
-            if (!ivBase64 || !cipherBase64) {
-                continue;
-            }
+            // Base64.parse(a)
+            const iv = Buffer.from(ivBase64, "base64");
 
-            const iv = await base64ToArrayBuffer(ivBase64);
-            const keyBytes = await base64ToArrayBuffer(
-                'aWZ5b3VzY3JhcGV5b3VhcmVnYXkAAAAAAAAAAAAAAAA='
-            );
-            const ciphertext = await base64ToArrayBuffer(cipherBase64);
+            // ciphertext
+            const ciphertext = Buffer.from(cipherBase64, "base64");
+
+            // key.padEnd(32, "\0")
+            const paddedKey = Buffer.from(KEY, "base64").toString().padEnd(32, "\0");
+            const keyBytes = new TextEncoder().encode(paddedKey);
 
             const cryptoKey = await crypto.subtle.importKey(
-                'raw',
+                "raw",
                 keyBytes,
-                { name: 'AES-CBC' },
+                { name: "AES-CBC" },
                 false,
-                ['decrypt']
+                ["decrypt"]
             );
 
-            const plaintextBuffer = await crypto.subtle.decrypt(
+            const decryptedBuffer = await crypto.subtle.decrypt(
                 {
-                    name: 'AES-CBC',
-                    iv: iv as ArrayBuffer // Explicit cast
+                    name: "AES-CBC",
+                    iv
                 },
                 cryptoKey,
                 ciphertext
             );
 
-            const decrypted = new TextDecoder().decode(plaintextBuffer);
+            const decrypted = new TextDecoder().decode(decryptedBuffer).trim();
 
-            if (decrypted && decrypted.trim()) {
-                results.push(decrypted.trim());
-            }
+            if (decrypted) results.push(decrypted);
         }
 
         return results;
     } catch (error) {
-        throw new Error('Vidzee Decrypt failed: ' + (error as Error).message);
+        throw new Error("Vidzee Decrypt failed: " + (error as Error).message);
     }
-}
-
-/**
- * Convert base64 to ArrayBuffer (Web Crypto compatible)
- */
-async function base64ToArrayBuffer(b64: string): Promise<ArrayBuffer> {
-    const binaryString = atob(b64);
-    const bytes = new Uint8Array(binaryString.length);
-
-    for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-
-    return bytes.buffer;
 }
