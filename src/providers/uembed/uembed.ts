@@ -115,18 +115,24 @@ export class UembedProvider extends BaseProvider {
                             variant.url,
                             variant.url.includes('xpass.top')
                                 ? {}
-                                : {
-                                      ...this.HEADERS,
-                                      Referer: `${urlOrigin}/`,
-                                      Origin: urlOrigin
-                                  }
+                                : variant.url.includes('goodstream.cc')
+                                  ? {
+                                        ...this.HEADERS,
+                                        Referer: `https://flashstream.cc/`,
+                                        Origin: 'https://flashstream.cc'
+                                    }
+                                  : {
+                                        ...this.HEADERS,
+                                        Referer: `${urlOrigin}/`,
+                                        Origin: urlOrigin
+                                    }
                         ),
                         type: 'hls',
                         quality: variant.quality,
                         audioTracks: [
                             {
                                 language,
-                                label: stream.title || 'Unknown'
+                                label: 'English'
                             }
                         ],
                         provider: { id: this.id, name: this.name }

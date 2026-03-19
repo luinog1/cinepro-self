@@ -2,7 +2,11 @@
 // by default the most common video files are included in the @omss/framework
 
 export const streamPatterns: RegExp[] = [
-    /pixeldrain|pixeldra\.in/,
+    /pixeldrain.dev|pixeldra\.in/,
     /hub.raj.lat/,
-    /hub.oreao-cdn.buzz/
+    /hub.oreao-cdn.buzz/,
+    /wasabisys.com/,
+    /hakunaymatata.com/,
+    /streamflixserver.site/,
+    /tripplestream.online/,
 ];

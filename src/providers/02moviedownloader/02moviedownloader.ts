@@ -1,4 +1,3 @@
-import { BaseProvider, type Subtitle, type SourceType } from '@omss/framework';
 import type {
     Diagnostic,
     ProviderCapabilities,
@@ -7,6 +6,7 @@ import type {
     Source,
     SubtitleFormat
 } from '@omss/framework';
+import { BaseProvider, type SourceType, type Subtitle } from '@omss/framework';
 import axios from 'axios';
 import { MovieDownloaderResponse, Token } from './02moviedownloader.types.js';
 
@@ -17,11 +17,17 @@ export class MovieDownloader extends BaseProvider {
     readonly BASE_URL = 'https://02moviedownloader.site';
     readonly HEADERS = {
         'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150 Safari/537.36',
-        Accept: 'application/json',
-        'Accept-Language': 'en-US,en;q=0.9',
-        Referer: this.BASE_URL,
-        Origin: this.BASE_URL
+            'Mozilla/5.0 (X11; U; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.6884.98 Safari/537.36',
+        accept: '*/*',
+        'accept-language': 'en-US,en;q=0.1',
+        'cache-control': 'no-cache',
+        pragma: 'no-cache',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        'sec-gpc': '1'
     };
 
     readonly capabilities: ProviderCapabilities = {
@@ -43,25 +49,58 @@ export class MovieDownloader extends BaseProvider {
     }
 
     async getToken(media: ProviderMediaObject): Promise<string> {
-        const req = await fetch(this.BASE_URL + '/api/verify-robot', {
-            headers: {
-                accept: '*/*',
-                'cache-control': 'no-cache'
-            },
-            referrer:
+        const headers = {
+            'User-Agent':
+                'Mozilla/5.0 (X11; U; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.6884.98 Safari/537.36',
+            accept: '*/*',
+            'accept-language': 'en-US,en;q=0.7',
+            'cache-control': 'no-cache',
+            pragma: 'no-cache',
+            dnt: '1',
+            origin: this.BASE_URL,
+            referer:
                 this.BASE_URL +
                 '/api/download' +
                 (media.type === 'movie'
                     ? '/movie/' + media.tmdbId
                     : '/tv/' + media.tmdbId + media.s + media.e),
-            body: null,
-            method: 'POST'
+            priority: 'u=1, i',
+            'sec-ch-ua':
+                '"(Not(A:Brand";v="99", "Google Chrome";v="134", "Chromium";v="134"',
+            'sec-ch-ua-full-version-list':
+                '"(Not(A:Brand";v="99.0.0.0", "Google Chrome";v="134", "Chromium";v="134"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Linux"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'sec-gpc': '1'
+        };
+
+        const req = await fetch(this.BASE_URL + '/api/verify-robot', {
+            method: 'POST',
+            headers
         });
         const resp = (await req.json()) as Token;
-        if (resp.success && resp.token) {
+        if (resp.token) {
             return resp.token;
         } else {
             throw 'no token found...';
+        }
+    }
+
+    /**
+     * Health check
+     */
+    async healthCheck(): Promise<boolean> {
+        try {
+            const response = await axios.head(this.BASE_URL, {
+                timeout: 5000,
+                headers: this.HEADERS
+            });
+            return response.status === 200;
+        } catch {
+            return false;
         }
     }
 
@@ -75,6 +114,9 @@ export class MovieDownloader extends BaseProvider {
             const pageUrl = this.buildPageUrl(media);
 
             const token = await this.getToken(media);
+            if (!token) {
+                return this.emptyResult('Failed to fetch token', media);
+            }
 
             const response: MovieDownloaderResponse = await this.fetchPage(
                 pageUrl,
@@ -223,15 +265,35 @@ export class MovieDownloader extends BaseProvider {
         media: ProviderMediaObject
     ): Promise<any> {
         try {
+            console.log(
+                `Fetching data for ${media.title} from ${url} with token: ${token}`
+            );
+
+            const refererUrl =
+                this.BASE_URL +
+                '/api/download' +
+                (media.type === 'movie'
+                    ? '/movie/' + media.tmdbId
+                    : '/tv/' + media.tmdbId + media.s + media.e);
+
             const response = await fetch(url, {
                 headers: {
+                    ...this.HEADERS,
                     accept: 'application/json',
-                    'x-session-token': token
+                    'x-session-token': token,
+                    origin: this.BASE_URL,
+                    referer: refererUrl
                 }
             });
+
             if (!response.ok) {
+                console.error(
+                    `Response status: ${response.status}, body:`,
+                    await response.text()
+                );
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
+
             this.console.log(
                 `Fetched data for ${media.title} from ${url}. returned ${response.status}`
             );
@@ -262,20 +324,5 @@ export class MovieDownloader extends BaseProvider {
                 }
             ]
         };
-    }
-
-    /**
-     * Health check
-     */
-    async healthCheck(): Promise<boolean> {
-        try {
-            const response = await axios.head(this.BASE_URL, {
-                timeout: 5000,
-                headers: this.HEADERS
-            });
-            return response.status === 200;
-        } catch {
-            return false;
-        }
     }
 }
