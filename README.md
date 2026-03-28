@@ -4,6 +4,8 @@
 
 <img src="https://repository-images.githubusercontent.com/1138947882/af901757-a06b-442d-8976-c485fcafc230"></img>
 
+### _Support CinePro's Development by starring this repo!_ ⭐
+
 **OMSS-compliant streaming backend powering the CinePro ecosystem.**  
 Built with [@omss/framework](https://www.npmjs.com/package/@omss/framework) for extensible, type-safe media scraping.
 
