@@ -6,21 +6,22 @@ import type {
     Source
 } from '@omss/framework';
 import type { StreamResponse } from './vidzee.types.js';
-import axios from 'axios';
-import decrypt from './decrypt.js';
+import axios, { AxiosResponse } from 'axios';
+import { decrypt, deriveKey } from './decrypt.js';
 
 export class VidZeeProvider extends BaseProvider {
     readonly id = 'vidzee';
     readonly name = 'VidZee';
     readonly enabled = true;
-    readonly BASE_URL = 'https://player.vidzee.wtf';
+    readonly BASE_URL = 'https://core.vidzee.wtf';
+    readonly PLAYER_URL = 'https://player.vidzee.wtf';
     readonly HEADERS = {
         'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150 Safari/537.36',
         Accept: 'application/json, text/javascript, */*; q=0.01',
         'Accept-Language': 'en-US,en;q=0.9',
-        Referer: this.BASE_URL,
-        Origin: this.BASE_URL
+        Referer: this.PLAYER_URL,
+        Origin: this.PLAYER_URL
     };
 
     readonly capabilities: ProviderCapabilities = {
@@ -46,7 +47,7 @@ export class VidZeeProvider extends BaseProvider {
     }
 
     /**
-     * Main scraping logic - Parallel servers + decryption
+     * Main scraping logic - Parallel servers + FULL parallel decryption
      */
     private async getSources(
         media: ProviderMediaObject,
@@ -55,15 +56,24 @@ export class VidZeeProvider extends BaseProvider {
         try {
             const tmdbId = media.tmdbId;
 
+            // 0. Start fetching decryption key early (non-blocking)
+            const decKey = await this.fetchDecryptionKey();
+            if (!decKey) {
+                return this.emptyResult(
+                    'Failed to fetch decryption key',
+                    media
+                );
+            }
+
             // 1. Parallel server requests
             const serverPromises = Array.from({ length: 14 }, (_, serverId) =>
                 this.fetchServer(tmdbId, serverId, params)
             );
+
             const results = await Promise.allSettled(serverPromises);
             const successfulResponses: StreamResponse[] = [];
 
-            for (let i = 0; i < results.length; i++) {
-                const result = results[i];
+            for (const result of results) {
                 if (result.status === 'fulfilled' && result.value) {
                     successfulResponses.push(result.value);
                 }
@@ -72,15 +82,15 @@ export class VidZeeProvider extends BaseProvider {
             if (successfulResponses.length === 0) {
                 return this.emptyResult('No working servers', media);
             }
-
-            // 2. Parallel decryption of ALL urls from ALL successful servers
+            // 2. FULL parallel decryption (servers × urls)
             const decryptPromises = successfulResponses.map((response) =>
-                decrypt(response.url).then((decryptedLinks) => ({
+                Promise.all(
+                    response.url.map((u) => decrypt(u.link, decKey))
+                ).then((decryptedLinks) => ({
                     response,
                     decryptedLinks
                 }))
             );
-
             const decryptionResults = await Promise.all(decryptPromises);
 
             // Flatten and deduplicate decrypted links
@@ -184,6 +194,24 @@ export class VidZeeProvider extends BaseProvider {
 
             return response.data as StreamResponse;
         } catch {
+            return null;
+        }
+    }
+
+    private async fetchDecryptionKey(): Promise<string | null> {
+        try {
+            const response = await fetch(`${this.BASE_URL}/api-key`, {
+                headers: this.HEADERS
+            });
+            if (response.status === 200) {
+                const data = await response.text();
+                if (data) {
+                    const key = await deriveKey(data);
+                    return key;
+                }
+            }
+            throw new Error('Failed to retrieve decryption key');
+        } catch (error) {
             return null;
         }
     }

@@ -122,7 +122,7 @@ export class StreamMafiaProvider extends BaseProvider {
                 diagnostics.push({
                     code: 'LANGUAGE_INFERRED',
                     message: `${this.name}: Audio language inferred from selected payload`,
-                    field: 'selected.lang',
+                    field: '',
                     severity: 'info'
                 });
             }
@@ -149,7 +149,7 @@ export class StreamMafiaProvider extends BaseProvider {
             diagnostics.push({
                 code: 'PROVIDER_ERROR',
                 message: `${this.name}: No playable sources found in API response`,
-                field: 'stream',
+                field: '',
                 severity: 'error'
             });
         }
@@ -260,7 +260,7 @@ export class StreamMafiaProvider extends BaseProvider {
         if (clean.endsWith('.mkv')) return 'mkv';
         if (clean.endsWith('.webm')) return 'webm';
 
-        return 'http';
+        return 'hls';
     }
 
     private normalizeQuality(value?: string, fallback = 'unknown'): string {
@@ -268,12 +268,12 @@ export class StreamMafiaProvider extends BaseProvider {
 
         const v = value.toLowerCase();
 
-        if (v.includes('2160')) return '2160p';
-        if (v.includes('1080')) return '1080p';
-        if (v.includes('720')) return '720p';
-        if (v.includes('480')) return '480p';
-        if (v.includes('360')) return '360p';
-        if (v.includes('240')) return '240p';
+        if (v.includes('2160')) return '2160';
+        if (v.includes('1080')) return '1080';
+        if (v.includes('720')) return '720';
+        if (v.includes('480')) return '480';
+        if (v.includes('360')) return '360';
+        if (v.includes('240')) return '240';
 
         return value;
     }

@@ -7,6 +7,7 @@ import type {
     Subtitle
 } from '@omss/framework';
 import axios from 'axios';
+import { VixSrcApiResponse } from './vixsrc.types.js';
 
 export class VixSrcProvider extends BaseProvider {
     readonly id = 'vixsrc';
@@ -51,11 +52,18 @@ export class VixSrcProvider extends BaseProvider {
             const pageUrl = this.buildPageUrl(media);
 
             // Fetch page HTML
-            const html = await this.fetchPage(pageUrl, media);
-            if (!html) {
-                return this.emptyResult('Failed to fetch page', media);
+            const sublink = await this.fetchApi(pageUrl);
+            if (!sublink) {
+                return this.emptyResult('Failed to fetch api', media);
             }
 
+            const html = await this.fetchPage(sublink.src);
+            if (!html) {
+                return this.emptyResult(
+                    'Failed to fetch second embed page',
+                    media
+                );
+            }
             // Extract token and playlist info
             const tokenData = this.extractTokenData(html, media);
             if (!tokenData) {
@@ -99,30 +107,42 @@ export class VixSrcProvider extends BaseProvider {
      */
     private buildPageUrl(media: ProviderMediaObject): string {
         if (media.type === 'movie') {
-            return `${this.BASE_URL}/movie/${media.tmdbId}`;
+            return `${this.BASE_URL}/api/movie/${media.tmdbId}`;
         } else {
-            return `${this.BASE_URL}/tv/${media.tmdbId}/${media.s}/${media.e}`;
+            return `${this.BASE_URL}/api/tv/${media.tmdbId}/${media.s}/${media.e}`;
         }
     }
 
     /**
      * Fetch page HTML
      */
-    private async fetchPage(
-        url: string,
-        media: ProviderMediaObject
-    ): Promise<string | null> {
+    private async fetchApi(url: string): Promise<VixSrcApiResponse | null> {
         try {
-            const response = await axios.get(url, {
-                headers: this.HEADERS,
-                timeout: 10000
+            const response = await fetch(url, {
+                headers: this.HEADERS
             });
 
             if (response.status !== 200) {
                 return null;
             }
 
-            return response.data;
+            return (await response.json()) as VixSrcApiResponse;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    private async fetchPage(suburl: string): Promise<string | null> {
+        try {
+            const response = await fetch(this.BASE_URL + suburl, {
+                headers: this.HEADERS
+            });
+
+            if (response.status !== 200) {
+                return null;
+            }
+
+            return await response.text();
         } catch (error) {
             return null;
         }

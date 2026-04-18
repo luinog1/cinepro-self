@@ -42,6 +42,15 @@ async function main() {
         proxyConfig: {
             knownThirdPartyProxies: knownThirdPartyProxies,
             streamPatterns
+        },
+
+        cors: {
+            origin: process.env.CORS_ORIGIN ?? '*',
+            methods: ['GET', 'OPTIONS'],
+            allowedHeaders: ['Content-Type', 'Authorization'],
+            exposedHeaders: ['Content-Range', 'Accept-Ranges', 'ETag'],
+            preflightContinue: false,
+            optionsSuccessStatus: 204
         }
     });
 

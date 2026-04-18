@@ -139,7 +139,7 @@ export class RgShowsProvider extends BaseProvider {
             diagnostics: [
                 {
                     code: 'PROVIDER_ERROR',
-                    message: `${this.name}: ${message}`,
+                    message: `${this.name}: ${message}. As of the last CinePro update, RgShows is experiencing issues. This may be due to changes on their end or temporary server problems. CinePro will continue to monitor the situation and update the provider as needed.`,
                     field: '',
                     severity: 'error'
                 }

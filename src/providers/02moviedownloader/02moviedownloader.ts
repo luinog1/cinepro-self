@@ -154,7 +154,7 @@ export class MovieDownloader extends BaseProvider {
                             : this.HEADERS
                     ),
                     type: 'mp4',
-                    quality: download.resolution.toString() + 'p',
+                    quality: download.resolution.toString(),
                     audioTracks: [
                         {
                             language: 'eng',
@@ -285,10 +285,6 @@ export class MovieDownloader extends BaseProvider {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-
-            this.console.log(
-                `Fetched data for ${media.title} from ${url}. returned ${response.status}`
-            );
             return await response.json();
         } catch (error) {
             throw new Error(
