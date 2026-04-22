@@ -162,8 +162,7 @@ export class VidRockProvider extends BaseProvider {
                 headers: {
                     ...this.HEADERS,
                     Referer: this.BASE_URL
-                },
-                timeout: 10000
+                }
             });
 
             if (response.status !== 200) {
@@ -205,8 +204,7 @@ export class VidRockProvider extends BaseProvider {
     private async fetchPage(url: string): Promise<string | null> {
         try {
             const response = await axios.get(url, {
-                headers: this.HEADERS,
-                timeout: 10000
+                headers: this.HEADERS
             });
 
             if (response.status !== 200) return null;

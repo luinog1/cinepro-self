@@ -188,8 +188,7 @@ export class VidZeeProvider extends BaseProvider {
             }
 
             const response = await axios.get(url, {
-                headers: this.HEADERS,
-                timeout: 8000
+                headers: this.HEADERS
             });
 
             return response.data as StreamResponse;

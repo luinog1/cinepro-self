@@ -70,8 +70,7 @@ export class Fmovies4U extends BaseProvider {
                     headers: {
                         ...this.HEADERS,
                         Referer: this.buildRefererUrl(media)
-                    },
-                    timeout: 10000
+                    }
                 }
             );
 
