@@ -2,16 +2,13 @@
 // by default the most common video files are included in the @omss/framework
 
 export const streamPatterns: RegExp[] = [
-    /pixeldrain.dev|pixeldra\.in/,
-    /hub.raj.lat/,
-    /hub.oreao-cdn.buzz/,
-    /wasabisys.com/,
-    /hakunaymatata.com/,
-    /streamflixserver.site/,
-    /tripplestream.online/,
-    /streamflixserver.site/,
-    /illimitableinkwell.site/,
-    /frostcomet5.pro/,
-    /(epimetheus63|earth14|pandora20).workers.dev/, // streammafia's workers.dev proxy domains
-    /tiktokcdn.com/
+    /pixeldrain\.dev|pixeldra\.in/,
+    /hub\.(raj\.lat|toxix\.buzz|oreao-cdn\.buzz)/,
+    /wasabisys\.com/,
+    /hakunaymatata\.com/,
+    /streamflixserver\.site|tripplestream\.online/,
+    /illimitableinkwell\.site/,
+    /frostcomet5\.pro/,
+    /(epimetheus63|earth14|pandora20)\.workers\.dev/, // streammafia's workers.dev proxy domains
+    /tiktokcdn\.com/
 ];

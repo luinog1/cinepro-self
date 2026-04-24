@@ -44,7 +44,7 @@ export class StreamMafiaProvider extends BaseProvider {
 
     async healthCheck(): Promise<boolean> {
         try {
-            const res = await axios.head(this.EMBED_URL, { timeout: 5000 });
+            const res = await axios.head(this.EMBED_URL);
             return res.status === 200;
         } catch {
             return false;

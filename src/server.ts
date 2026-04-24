@@ -51,6 +51,22 @@ async function main() {
             exposedHeaders: ['Content-Range', 'Accept-Ranges', 'ETag'],
             preflightContinue: false,
             optionsSuccessStatus: 204
+        },
+
+        stremio: {
+            enableNativeAddon: process.env.STREMIO_ADDON === 'true',
+            stremioAddons: [
+                {
+                    id: 'WebStreamerMBG',
+                    url: 'https://87d6a6ef6b58-webstreamrmbg.baby-beamup.club/manifest.json',
+                    enabled: true
+                },
+                {
+                    id: 'Streamify',
+                    url: 'https://stremify.hayd.uk/manifest.json',
+                    enabled: true
+                }
+            ]
         }
     });
 

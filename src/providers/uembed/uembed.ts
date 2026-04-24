@@ -13,10 +13,11 @@ const VXR_API = 'https://cdn.madplay.site/vxr';
 const HOLLY_API = 'https://api.madplay.site/api/movies/holly';
 const ROGFLIX_API = 'https://api.madplay.site/api/rogflix';
 
+// Uembed has been sunset. Unknown if it will be revived
 export class UembedProvider extends BaseProvider {
     readonly id = 'uembed';
     readonly name = 'Uembed';
-    readonly enabled = true;
+    readonly enabled = false;
     readonly BASE_URL = 'https://madplay.site';
     readonly HEADERS = {
         Origin: this.BASE_URL,
@@ -80,8 +81,7 @@ export class UembedProvider extends BaseProvider {
 
     private async fetchApi(url: string): Promise<any[]> {
         const response = await axios.get(url, {
-            headers: this.HEADERS,
-            timeout: 10000
+            headers: this.HEADERS
         });
 
         if (response.status !== 200 || !Array.isArray(response.data)) {
@@ -176,7 +176,6 @@ export class UembedProvider extends BaseProvider {
                 ...this.HEADERS,
                 Accept: 'application/vnd.apple.mpegurl,application/x-mpegURL,*/*'
             },
-            timeout: 10000,
             responseType: 'text'
         });
 

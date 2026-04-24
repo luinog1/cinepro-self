@@ -6,7 +6,7 @@ import type {
     Source
 } from '@omss/framework';
 import type { StreamResponse } from './vidzee.types.js';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import { decrypt, deriveKey } from './decrypt.js';
 
 export class VidZeeProvider extends BaseProvider {
@@ -188,8 +188,7 @@ export class VidZeeProvider extends BaseProvider {
             }
 
             const response = await axios.get(url, {
-                headers: this.HEADERS,
-                timeout: 8000
+                headers: this.HEADERS
             });
 
             return response.data as StreamResponse;

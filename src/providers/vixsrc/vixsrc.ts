@@ -204,8 +204,7 @@ export class VixSrcProvider extends BaseProvider {
                 headers: {
                     ...this.HEADERS,
                     Referer: referer
-                },
-                timeout: 10000
+                }
             });
 
             if (response.status !== 200) {

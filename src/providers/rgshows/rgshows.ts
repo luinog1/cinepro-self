@@ -112,8 +112,7 @@ export class RgShowsProvider extends BaseProvider {
     ): Promise<string | null> {
         try {
             const response = await axios.get(url, {
-                headers: this.HEADERS,
-                timeout: 10000
+                headers: this.HEADERS
             });
 
             if (response.status !== 200) {
