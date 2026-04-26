@@ -94,7 +94,8 @@ export class PoprProvider extends BaseProvider {
             'Sigma',
             'Prime',
             'Alfa',
-            'Lamda'
+            'Lamda',
+            'ynx_vidsrc'
         ];
         let playType = 'tv';
         let ep = media.e || 1;
@@ -122,6 +123,8 @@ export class PoprProvider extends BaseProvider {
                 let streamType = path.extname(new URL(url).pathname);
                 const subtitles = response.results?.[0]?.subtitles || [];
                 let INVALID_QUALITIES = ['Hindi', 'English', 'MAIN'];
+                let QUALITIES = ['Hindi', 'English'];
+                let languages = QUALITIES.includes(quality);
                 return {
                     sources: [
                         {
@@ -130,7 +133,14 @@ export class PoprProvider extends BaseProvider {
                             quality: INVALID_QUALITIES.includes(quality)
                                 ? 'auto'
                                 : quality || 'auto',
-                            audioTracks: [],
+                            audioTracks: [
+                                {
+                                    language: languages
+                                        ? quality.toLowerCase().substring(0, 3)
+                                        : 'eng',
+                                    label: languages ? quality : 'English'
+                                }
+                            ],
                             provider: { name: this.name, id: this.id }
                         }
                     ],
