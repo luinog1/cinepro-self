@@ -9,6 +9,7 @@ import type {
 } from '@omss/framework';
 import axios from 'axios';
 import { VidnestResponse } from './popr.types.js';
+
 export class PoprProvider extends BaseProvider {
     readonly id = 'popr';
     readonly name = 'Popr';
@@ -29,7 +30,6 @@ export class PoprProvider extends BaseProvider {
      */
     async getMovieSources(media: ProviderMediaObject): Promise<ProviderResult> {
         try {
-            this.console.log('fetching movie response', media);
             let movieSource = await this.fetchSource(media, 'movie');
 
             return {
@@ -38,11 +38,6 @@ export class PoprProvider extends BaseProvider {
                 diagnostics: []
             };
         } catch (error) {
-            this.console.error(
-                error instanceof Error
-                    ? error.message
-                    : 'error at getting movie source'
-            );
             return this.emptyResult(
                 error instanceof Error
                     ? error.message
@@ -57,7 +52,6 @@ export class PoprProvider extends BaseProvider {
      */
     async getTVSources(media: ProviderMediaObject): Promise<ProviderResult> {
         try {
-            this.console.log('fetching tv response', media);
             let tvSource = await this.fetchSource(media, 'tv');
 
             return {
@@ -66,11 +60,6 @@ export class PoprProvider extends BaseProvider {
                 diagnostics: []
             };
         } catch (error) {
-            this.console.error(
-                error instanceof Error
-                    ? error.message
-                    : 'error at getting movie source'
-            );
             return this.emptyResult(
                 error instanceof Error
                     ? error.message
@@ -115,8 +104,7 @@ export class PoprProvider extends BaseProvider {
             (server) =>
                 axios
                     .get<VidnestResponse>(buildUrl(server), {
-                        headers: this.HEADERS,
-                        timeout: 8000
+                        headers: this.HEADERS
                     })
                     .then(({ data }) => {
                         const stream = data?.results?.[0]?.streams?.[0];
@@ -175,7 +163,7 @@ export class PoprProvider extends BaseProvider {
                 // dedupe subtitles by URL
                 if (!subtitlesMap.has(sub.url)) {
                     subtitlesMap.set(sub.url, {
-                        url: sub.url,
+                        url: this.createProxyUrl(sub.url),
                         format: 'vtt',
                         label: sub.lang || 'Unknown'
                     });
@@ -212,7 +200,6 @@ export class PoprProvider extends BaseProvider {
     async healthCheck(): Promise<boolean> {
         try {
             const response = await axios.head(this.BASE_URL, {
-                timeout: 5000,
                 headers: this.HEADERS
             });
             return response.status === 200;
