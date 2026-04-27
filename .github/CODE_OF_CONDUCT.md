@@ -55,7 +55,7 @@ further defined and clarified by project maintainers.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting the project team through [GitHub Discussions](https://github.com/orgs/cinepro-org/discussions) or by opening an issue.
+reported by contacting the project team through contact@cinepro.cc or by opening an issue.
 
 Project maintainers who do not follow or enforce the Code of Conduct in good
 faith may face temporary or permanent repercussions as determined by other

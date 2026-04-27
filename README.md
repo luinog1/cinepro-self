@@ -19,11 +19,11 @@ Built with [@omss/framework](https://www.npmjs.com/package/@omss/framework) for 
 
 ---
 
-CinePro Core is the central scraping and streaming engine of the CinePro ecosystem. It exposes an [OMSS-compliant](https://github.com/omss-spec/omss-spec) HTTP API for resolving movie and TV show stream sources from multiple providers, with Redis caching and full Docker support. **Get up to 100+ unique sources for a single movie/tv show!**
+CinePro Core is the central scraping and streaming engine of the CinePro ecosystem. It exposes an [OMSS-compliant](https://github.com/omss-spec/omss-spec) HTTP API for resolving movie and TV show stream sources from multiple providers, with Redis caching and full Docker support. Now even with MCP support for your AI agents! (The first streaming server worldwide to offer this feature). **Get up to 50+ unique sources for a single movie/tv show!**
 
 <details><summary>Proof!</summary>
 <p>
-With failing providers still got 88 sources. If the other providers worked (which they would I not be connected to a VPN) we would have gotten more then 100 sources!
+With failing providers still got 88 sources. If the other providers worked (which they would I not be connected to a VPN) we would have gotten more then 50 sources! Please note that this number changes very often as providers change their sites and try to block scrapers. CinePro Core is designed to be resilient to these changes with its modular provider system and regular updates, but the exact number of sources can vary over time.
 
 ![proof](docs/images/img.png)
 

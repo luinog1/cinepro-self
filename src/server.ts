@@ -54,7 +54,9 @@ async function main() {
         },
 
         stremio: {
+            // exposes a stremio addon on /stremio/manifest.json
             enableNativeAddon: process.env.STREMIO_ADDON === 'true',
+            // allows adding custom stremio addons that can be used as providers.
             stremioAddons: [
                 {
                     id: 'WebStreamerMBG',
@@ -67,6 +69,11 @@ async function main() {
                     enabled: true
                 }
             ]
+        },
+
+        // MCP for AI agents
+        mcp: {
+            enabled: process.env.MCP_ENABLED === 'true'
         }
     });
 

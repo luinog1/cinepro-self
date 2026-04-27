@@ -55,7 +55,7 @@ Report to CinePro Core if the vulnerability is specific to:
 
 **→ Report via GitHub Security Advisories**: [Create a Security Advisory](https://github.com/cinepro-org/core/security/advisories/new)
 
-Alternatively, you can email security concerns to the maintainers (check [GitHub organization](https://github.com/cinepro-org) for contact information).
+Alternatively, you can email security concerns directly to security@cinepro.cc
 
 ### What to Include in Your Report
 

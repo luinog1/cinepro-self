@@ -7,7 +7,7 @@
         "build": "tsc",
         "start": "npm run build && node dist/server.js",
         "format": "prettier --write src",
-        "clean": "npx rimraf dist"
+        "clean": "npx rimraf dist"  
     },
     "dependencies": {
         "@omss/framework": "^1.1.19",
