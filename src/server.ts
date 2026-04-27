@@ -73,7 +73,7 @@ async function main() {
 
         // MCP for AI agents
         mcp: {
-            enabled: process.env.MCP_ENABLED === 'true',
+            enabled: process.env.MCP_ENABLED === 'true'
         }
     });
 

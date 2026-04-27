@@ -213,7 +213,6 @@ jobs:
             -t "$IMAGE:latest" \
             "$AMD64_IMAGE" "$ARM64_IMAGE"
 
-      # --- New: categorized release notes without using git tags as triggers ---
       - name: Generate categorized release notes
         id: release_notes
         run: |
