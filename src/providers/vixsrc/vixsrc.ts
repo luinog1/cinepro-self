@@ -6,7 +6,6 @@ import type {
     Source,
     Subtitle
 } from '@omss/framework';
-import axios from 'axios';
 import { VixSrcApiResponse } from './vixsrc.types.js';
 
 export class VixSrcProvider extends BaseProvider {
@@ -48,10 +47,8 @@ export class VixSrcProvider extends BaseProvider {
         media: ProviderMediaObject
     ): Promise<ProviderResult> {
         try {
-            // Build page URL
             const pageUrl = this.buildPageUrl(media);
 
-            // Fetch page HTML
             const sublink = await this.fetchApi(pageUrl);
             if (!sublink) {
                 return this.emptyResult('Failed to fetch api', media);
@@ -64,16 +61,14 @@ export class VixSrcProvider extends BaseProvider {
                     media
                 );
             }
-            // Extract token and playlist info
+
             const tokenData = this.extractTokenData(html, media);
             if (!tokenData) {
                 return this.emptyResult('Invalid or expired token', media);
             }
 
-            // Build master playlist URL
             const masterUrl = this.buildMasterUrl(tokenData);
 
-            // Fetch master playlist
             const playlistContent = await this.fetchPlaylist(
                 masterUrl,
                 pageUrl,
@@ -83,15 +78,12 @@ export class VixSrcProvider extends BaseProvider {
                 return this.emptyResult('Failed to fetch playlist', media);
             }
 
-            // Parse playlist content
-            const result = this.parsePlaylist(
+            return this.parsePlaylist(
                 playlistContent,
                 masterUrl,
                 pageUrl,
                 media
             );
-
-            return result;
         } catch (error) {
             return this.emptyResult(
                 error instanceof Error
@@ -127,7 +119,7 @@ export class VixSrcProvider extends BaseProvider {
             }
 
             return (await response.json()) as VixSrcApiResponse;
-        } catch (error) {
+        } catch {
             return null;
         }
     }
@@ -143,7 +135,7 @@ export class VixSrcProvider extends BaseProvider {
             }
 
             return await response.text();
-        } catch (error) {
+        } catch {
             return null;
         }
     }
@@ -163,7 +155,6 @@ export class VixSrcProvider extends BaseProvider {
             return null;
         }
 
-        // Check if token is expired
         if (this.isTokenExpired(expires)) {
             return null;
         }
@@ -200,7 +191,7 @@ export class VixSrcProvider extends BaseProvider {
         media: ProviderMediaObject
     ): Promise<string | null> {
         try {
-            const response = await axios.get(url, {
+            const response = await fetch(url, {
                 headers: {
                     ...this.HEADERS,
                     Referer: referer
@@ -211,8 +202,8 @@ export class VixSrcProvider extends BaseProvider {
                 return null;
             }
 
-            return response.data;
-        } catch (error) {
+            return await response.text();
+        } catch {
             return null;
         }
     }
@@ -234,7 +225,6 @@ export class VixSrcProvider extends BaseProvider {
             return this.emptyResult('No streams found in playlist', media);
         }
 
-        // Get highest quality variant
         const bestVariant = variants.reduce((best, current) =>
             current.resolution > best.resolution ? current : best
         );
@@ -379,8 +369,8 @@ export class VixSrcProvider extends BaseProvider {
      */
     async healthCheck(): Promise<boolean> {
         try {
-            const response = await axios.head(this.BASE_URL, {
-                timeout: 5000,
+            const response = await fetch(this.BASE_URL, {
+                method: 'HEAD',
                 headers: this.HEADERS
             });
             return response.status === 200;

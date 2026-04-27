@@ -9,7 +9,6 @@ import type {
     SourceType
 } from '@omss/framework';
 import { BaseProvider } from '@omss/framework';
-import axios from 'axios';
 import { ApiResponse, EncryptedPayload } from './streammafia.types.js';
 import { decryptStreamMafia } from './decrypt.js';
 
@@ -44,7 +43,10 @@ export class StreamMafiaProvider extends BaseProvider {
 
     async healthCheck(): Promise<boolean> {
         try {
-            const res = await axios.head(this.EMBED_URL);
+            const res = await fetch(this.BASE_URL, {
+                method: 'HEAD',
+                headers: this.HEADERS            
+            });
             return res.status === 200;
         } catch {
             return false;
@@ -81,10 +83,9 @@ export class StreamMafiaProvider extends BaseProvider {
 
     private async fetchPage(url: string): Promise<EncryptedPayload | null> {
         try {
-            const res = await axios.get(url, { headers: this.HEADERS });
-            return typeof res.data === 'string'
-                ? JSON.parse(res.data)
-                : res.data;
+            const res = await fetch(url, { headers: this.HEADERS });
+            if (res.status !== 200) return null;
+            return await res.json() as EncryptedPayload;
         } catch {
             return null;
         }
@@ -188,14 +189,14 @@ export class StreamMafiaProvider extends BaseProvider {
         audioTracks: AudioTrack[];
     }> {
         try {
-            const res = await axios.get(url, {
+            const res = await fetch(url, {
                 headers: {
                     ...this.HEADERS,
                     Referer: this.EMBED_URL + '/'
                 }
             });
 
-            const content: string = res.data;
+            const content: string = await res.text();
             const variants = this.parseVariants(content);
             const audioTracks = this.parseAudioTracks(content);
 

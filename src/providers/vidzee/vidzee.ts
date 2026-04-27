@@ -6,7 +6,6 @@ import type {
     Source
 } from '@omss/framework';
 import type { StreamResponse } from './vidzee.types.js';
-import axios from 'axios';
 import { decrypt, deriveKey } from './decrypt.js';
 
 export class VidZeeProvider extends BaseProvider {
@@ -56,7 +55,6 @@ export class VidZeeProvider extends BaseProvider {
         try {
             const tmdbId = media.tmdbId;
 
-            // 0. Start fetching decryption key early (non-blocking)
             const decKey = await this.fetchDecryptionKey();
             if (!decKey) {
                 return this.emptyResult(
@@ -65,7 +63,6 @@ export class VidZeeProvider extends BaseProvider {
                 );
             }
 
-            // 1. Parallel server requests
             const serverPromises = Array.from({ length: 14 }, (_, serverId) =>
                 this.fetchServer(tmdbId, serverId, params)
             );
@@ -82,7 +79,7 @@ export class VidZeeProvider extends BaseProvider {
             if (successfulResponses.length === 0) {
                 return this.emptyResult('No working servers', media);
             }
-            // 2. FULL parallel decryption (servers × urls)
+
             const decryptPromises = successfulResponses.map((response) =>
                 Promise.all(
                     response.url.map((u) => decrypt(u.link, decKey))
@@ -93,14 +90,12 @@ export class VidZeeProvider extends BaseProvider {
             );
             const decryptionResults = await Promise.all(decryptPromises);
 
-            // Flatten and deduplicate decrypted links
             const allDecryptedLinks: string[] = [];
             const allSubtitles = new Map<string, Subtitle>();
 
             for (const { response, decryptedLinks } of decryptionResults) {
                 allDecryptedLinks.push(...decryptedLinks);
 
-                // Process subtitles
                 for (const track of response.tracks) {
                     if (track.url && track.lang) {
                         const proxySubUrl = this.createProxyUrl(
@@ -120,7 +115,6 @@ export class VidZeeProvider extends BaseProvider {
                 }
             }
 
-            // Deduplicate links
             const uniqueLinks = [...new Set(allDecryptedLinks)].filter(
                 (link) => link && link.startsWith('http')
             );
@@ -187,11 +181,15 @@ export class VidZeeProvider extends BaseProvider {
                 url += `&ss=${params.season}&ep=${params.episode}`;
             }
 
-            const response = await axios.get(url, {
+            const response = await fetch(url, {
                 headers: this.HEADERS
             });
 
-            return response.data as StreamResponse;
+            if (!response.ok) {
+                return null;
+            }
+
+            return (await response.json()) as StreamResponse;
         } catch {
             return null;
         }
@@ -202,15 +200,16 @@ export class VidZeeProvider extends BaseProvider {
             const response = await fetch(`${this.BASE_URL}/api-key`, {
                 headers: this.HEADERS
             });
+
             if (response.status === 200) {
                 const data = await response.text();
                 if (data) {
-                    const key = await deriveKey(data);
-                    return key;
+                    return await deriveKey(data);
                 }
             }
-            throw new Error('Failed to retrieve decryption key');
-        } catch (error) {
+
+            return null;
+        } catch {
             return null;
         }
     }
@@ -222,7 +221,6 @@ export class VidZeeProvider extends BaseProvider {
         message: string,
         media: ProviderMediaObject
     ): ProviderResult {
-        // @ts-ignore
         return {
             sources: [],
             subtitles: [],
@@ -242,8 +240,8 @@ export class VidZeeProvider extends BaseProvider {
      */
     async healthCheck(): Promise<boolean> {
         try {
-            const response = await axios.head(this.BASE_URL, {
-                timeout: 5000,
+            const response = await fetch(this.BASE_URL, {
+                method: 'HEAD',
                 headers: this.HEADERS
             });
             return response.status === 200;

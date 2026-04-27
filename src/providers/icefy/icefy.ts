@@ -4,7 +4,6 @@ import type {
     ProviderMediaObject,
     ProviderResult
 } from '@omss/framework';
-import axios from 'axios';
 
 export class IcefyProvider extends BaseProvider {
     readonly id = 'Icefy';
@@ -41,15 +40,17 @@ export class IcefyProvider extends BaseProvider {
         try {
             const apiUrl = this.buildApiUrl(media);
 
-            const response = await axios.get(apiUrl, {
+            const response = await fetch(apiUrl, {
                 headers: this.HEADERS
             });
 
-            if (!response.data?.stream) {
+            const data = await response.json() as unknown as { stream: string };
+
+            if (!data?.stream) {
                 throw new Error('No stream URL returned');
             }
 
-            const streamUrl: string = response.data.stream;
+            const streamUrl: string = data.stream;
 
             return {
                 sources: [
@@ -121,8 +122,9 @@ export class IcefyProvider extends BaseProvider {
 
     async healthCheck(): Promise<boolean> {
         try {
-            const res = await axios.get(this.BASE_URL, {
-                timeout: 5000
+            const res = await fetch(this.BASE_URL, {
+                method: 'HEAD',
+                headers: this.HEADERS
             });
             return res.status === 200;
         } catch {

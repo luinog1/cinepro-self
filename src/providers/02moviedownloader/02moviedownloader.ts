@@ -7,7 +7,6 @@ import type {
     SubtitleFormat
 } from '@omss/framework';
 import { BaseProvider, type SourceType, type Subtitle } from '@omss/framework';
-import axios from 'axios';
 import { MovieDownloaderResponse, Token } from './02moviedownloader.types.js';
 
 export class MovieDownloader extends BaseProvider {
@@ -94,8 +93,8 @@ export class MovieDownloader extends BaseProvider {
      */
     async healthCheck(): Promise<boolean> {
         try {
-            const response = await axios.head(this.BASE_URL, {
-                timeout: 5000,
+            const response = await fetch(this.BASE_URL, {
+                method: 'HEAD',
                 headers: this.HEADERS
             });
             return response.status === 200;

@@ -6,7 +6,6 @@ import type {
     Source,
     Subtitle
 } from '@omss/framework';
-import axios from 'axios';
 import { RgShowsResponse } from './rgshows.types.js';
 
 export class RgShowsProvider extends BaseProvider {
@@ -111,7 +110,7 @@ export class RgShowsProvider extends BaseProvider {
         media: ProviderMediaObject
     ): Promise<string | null> {
         try {
-            const response = await axios.get(url, {
+            const response = await fetch(url, {
                 headers: this.HEADERS
             });
 
@@ -119,7 +118,7 @@ export class RgShowsProvider extends BaseProvider {
                 return null;
             }
 
-            return response.data;
+            return await response.json() as unknown as string;
         } catch (error) {
             return null;
         }
@@ -151,8 +150,8 @@ export class RgShowsProvider extends BaseProvider {
      */
     async healthCheck(): Promise<boolean> {
         try {
-            const response = await axios.head(this.BASE_URL, {
-                timeout: 5000,
+            const response = await fetch(this.BASE_URL, {
+                method: 'HEAD',
                 headers: this.HEADERS
             });
             return response.status === 200;
