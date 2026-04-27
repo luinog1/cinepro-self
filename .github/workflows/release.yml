@@ -232,71 +232,73 @@ jobs:
 
             case "$message" in
               feat:*|feat\(*|feature:*)
-                FEATURES="${FEATURES}- feat: [${clean_message}](https://github.com/${{ github.repository }}/commit/${short_hash})\\n"
+                FEATURES="${FEATURES}- feat: [${clean_message}](https://github.com/${{ github.repository }}/commit/${short_hash})\n"
                 ;;
               fix:*|fix\(*)
-                FIXES="${FIXES}- fix: [${clean_message}](https://github.com/${{ github.repository }}/commit/${short_hash})\\n"
+                FIXES="${FIXES}- fix: [${clean_message}](https://github.com/${{ github.repository }}/commit/${short_hash})\n"
                 ;;
               docs:*|docs\(*)
-                DOCS="${DOCS}- docs: [${clean_message}](https://github.com/${{ github.repository }}/commit/${short_hash})\\n"
+                DOCS="${DOCS}- docs: [${clean_message}](https://github.com/${{ github.repository }}/commit/${short_hash})\n"
                 ;;
               chore:*|chore\(*|ci:*|ci\(*|build:*|build\(*)
-                CHORES="${CHORES}- chore: [${clean_message}](https://github.com/${{ github.repository }}/commit/${short_hash})\\n"
+                CHORES="${CHORES}- chore: [${clean_message}](https://github.com/${{ github.repository }}/commit/${short_hash})\n"
                 ;;
               *BREAKING*|*breaking*|*!:*)
-                BREAKING="${BREAKING}- breaking change: [${message}](https://github.com/${{ github.repository }}/commit/${short_hash})\\n"
+                BREAKING="${BREAKING}- breaking change: [${message}](https://github.com/${{ github.repository }}/commit/${short_hash})\n"
                 ;;
               *)
-                OTHERS="${OTHERS}- [${message}](https://github.com/${{ github.repository }}/commit/${short_hash})\\n"
+                OTHERS="${OTHERS}- [${message}](https://github.com/${{ github.repository }}/commit/${short_hash})\n"
                 ;;
             esac
           done <<< "$HASHES"
 
-          NOTES="## Release $CURRENT_TAG"$'\\n\\n'
+          NOTES="## Release $CURRENT_TAG"$'\n\n'
+          NOTES="${NOTES}Released on ${{ needs.prepare.outputs.run_date }}. This release includes the following changes. [Version History](https://docs.cinepro.cc/core/versions):"$'\n\n'
 
           if [ -n "$BREAKING" ]; then
-            NOTES="${NOTES}### ⚠️ Breaking Changes"$'\\n'"$(echo -e "$BREAKING")"$'\\n'
+            NOTES="${NOTES}### ⚠️ Breaking Changes"$'\n'"$(echo -e "$BREAKING")"$'\n'
           fi
 
           if [ -n "$FEATURES" ]; then
-            NOTES="${NOTES}### ✨ Features"$'\\n'"$(echo -e "$FEATURES")"$'\\n'
+            NOTES="${NOTES}### ✨ Features"$'\n'"$(echo -e "$FEATURES")"$'\n'
           fi
 
           if [ -n "$FIXES" ]; then
-            NOTES="${NOTES}### 🐛 Bug Fixes"$'\\n'"$(echo -e "$FIXES")"$'\\n'
+            NOTES="${NOTES}### 🐛 Bug Fixes"$'\n'"$(echo -e "$FIXES")"$'\n'
           fi
 
           if [ -n "$DOCS" ]; then
-            NOTES="${NOTES}### 📚 Documentation"$'\\n'"$(echo -e "$DOCS")"$'\\n'
+            NOTES="${NOTES}### 📚 Documentation"$'\n'"$(echo -e "$DOCS")"$'\n'
           fi
 
           if [ -n "$CHORES" ]; then
-            NOTES="${NOTES}### 🔧 Maintenance"$'\\n'"$(echo -e "$CHORES")"$'\\n'
+            NOTES="${NOTES}### 🔧 Maintenance"$'\n'"$(echo -e "$CHORES")"$'\n'
           fi
 
           if [ -n "$OTHERS" ]; then
-            NOTES="${NOTES}### 📦 Other Changes"$'\\n'"$(echo -e "$OTHERS")"$'\\n'
+            NOTES="${NOTES}### 📦 Other Changes"$'\n'"$(echo -e "$OTHERS")"$'\n'
           fi
 
           # Append your Docker image info + quick start
-          NOTES="${NOTES}"$'\\n'"## Docker images"$'\\n\\n'
-          NOTES="${NOTES}The following multi-arch images (linux/amd64, linux/arm64) were published to GitHub Container Registry:"$'\\n\\n'
-          NOTES="${NOTES}- ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:${{ needs.prepare.outputs.app_version }}"$'\\n'
-          NOTES="${NOTES}- ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:main"$'\\n'
-          NOTES="${NOTES}- ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest"$'\\n\\n'
+          NOTES="${NOTES}"$'\n'"## Docker images"$'\n\n'
+          NOTES="${NOTES}The following multi-arch images (linux/amd64, linux/arm64) were published to GitHub Container Registry:"$'\n\n'
+          NOTES="${NOTES}- ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:${{ needs.prepare.outputs.app_version }}"$'\n'
+          NOTES="${NOTES}- ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:main"$'\n'
+          NOTES="${NOTES}- ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest"$'\n\n'
 
-          NOTES="${NOTES}## Quick start"$'\\n\\n'
-          NOTES="${NOTES}Pull the latest image:"$'\\n\\n'
-          NOTES="${NOTES}\`\`\`bash"$'\\n'
-          NOTES="${NOTES}docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest"$'\\n'
-          NOTES="${NOTES}\`\`\`"$'\\n\\n'
+          NOTES="${NOTES}## Quick start"$'\n\n'
+          NOTES="${NOTES}Pull the latest image:"$'\n\n'
+          NOTES="${NOTES}\`\`\`bash"$'\n'
+          NOTES="${NOTES}docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest"$'\n'
+          NOTES="${NOTES}\`\`\`"$'\n\n'
 
-          NOTES="${NOTES}Run the API locally (example):"$'\\n\\n'
-          NOTES="${NOTES}\`\`\`bash"$'\\n'
-          NOTES="${NOTES}docker run -p 3000:3000 \\"$'\\n'
-          NOTES="${NOTES}  -e TMDB_API_KEY=your-tmdb-key \\"$'\\n'
-          NOTES="${NOTES}  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest"$'\\n'
-          NOTES="${NOTES}\`\`\`"$'\\n'
+          NOTES="${NOTES}Run the newest API locally:"$'\n\n'
+          NOTES="${NOTES}\`\`\`bash"$'\n'
+          NOTES="${NOTES}docker run -p 3000:3000 \\"$'\n'
+          NOTES="${NOTES}  -e TMDB_API_KEY=your-tmdb-key \\"$'\n'
+          NOTES="${NOTES}  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest"$'\n'
+          NOTES="${NOTES}\`\`\`"$'\n'
+          NOTES="${NOTES}## For more details, check the [CinePro documentation](https://docs.cinepro.cc) and the [Version History](https://docs.cinepro.cc/core/versions)."
 
           {
             echo "notes<<EOF"
