@@ -15,7 +15,8 @@ import type {
  * aes-gcm decryption key used by peachify for encrypted api responses.
  * this is embedded in their frontend bundle.
  */
-const ENCRYPTION_KEY = 'd8f2a1b5e9c470814f6b2c3a5d8e7f901a2b3c4d5e3f7a8b9c0d1e2f3a4b5c6d';
+const ENCRYPTION_KEY =
+    'd8f2a1b5e9c470814f6b2c3a5d8e7f901a2b3c4d5e3f7a8b9c0d1e2f3a4b5c6d';
 
 /**
  * list of peachify-compatible api base urls.
@@ -66,7 +67,9 @@ export class PeachifyProvider extends BaseProvider {
         media: ProviderMediaObject
     ): Promise<ProviderResult> {
         const results = await Promise.allSettled(
-            PEACHIFY_SERVERS.map((server) => this.fetchFromServer(server, media))
+            PEACHIFY_SERVERS.map((server) =>
+                this.fetchFromServer(server, media)
+            )
         );
 
         const sources: ProviderResult['sources'] = [];
@@ -100,7 +103,10 @@ export class PeachifyProvider extends BaseProvider {
         }
 
         if (sources.length === 0) {
-            return this.emptyResult('all peachify servers returned no sources', media);
+            return this.emptyResult(
+                'all peachify servers returned no sources',
+                media
+            );
         }
 
         return { sources, subtitles, diagnostics };
@@ -130,7 +136,9 @@ export class PeachifyProvider extends BaseProvider {
         }
 
         const rawSources = Array.isArray(body.sources) ? body.sources : [];
-        const rawSubtitles = Array.isArray(body.subtitles) ? body.subtitles : [];
+        const rawSubtitles = Array.isArray(body.subtitles)
+            ? body.subtitles
+            : [];
 
         if (rawSources.length === 0) return null;
 
@@ -171,7 +179,10 @@ export class PeachifyProvider extends BaseProvider {
      * constructs the api path for a given server base url and media object.
      * tv paths append season and episode after the tmdb id.
      */
-    private buildApiUrl(serverBase: string, media: ProviderMediaObject): string {
+    private buildApiUrl(
+        serverBase: string,
+        media: ProviderMediaObject
+    ): string {
         if (media.type === 'movie') {
             return `${serverBase}/movie/${media.tmdbId}`;
         }
@@ -212,9 +223,13 @@ export class PeachifyProvider extends BaseProvider {
                 const raw = new Uint8Array(
                     hex.match(/.{1,2}/g)!.map((b) => parseInt(b, 16))
                 );
-                return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, [
-                    'decrypt'
-                ]);
+                return crypto.subtle.importKey(
+                    'raw',
+                    raw,
+                    { name: 'AES-GCM' },
+                    false,
+                    ['decrypt']
+                );
             };
 
             const [ivPart, tagPart, cipherPart] = payload.split('.');
@@ -234,7 +249,9 @@ export class PeachifyProvider extends BaseProvider {
                 combined
             );
 
-            return JSON.parse(new TextDecoder().decode(plaintext)) as PeachifyApiResponse;
+            return JSON.parse(
+                new TextDecoder().decode(plaintext)
+            ) as PeachifyApiResponse;
         } catch {
             return null;
         }
@@ -249,20 +266,47 @@ export class PeachifyProvider extends BaseProvider {
         raw: PeachifyRawSource,
         providerName: string
     ): PeachifyParsedSource | null {
-        const url = this.pickString(raw, ['url', 'src', 'file', 'stream', 'streamUrl', 'playbackUrl']);
+        const url = this.pickString(raw, [
+            'url',
+            'src',
+            'file',
+            'stream',
+            'streamUrl',
+            'playbackUrl'
+        ]);
         if (!url) return null;
 
-        const rawType = this.pickString(raw, ['type', 'format', 'container']).toLowerCase();
+        const rawType = this.pickString(raw, [
+            'type',
+            'format',
+            'container'
+        ]).toLowerCase();
         const type: 'hls' | 'mp4' =
-            rawType.includes('hls') || rawType.includes('m3u8') || url.toLowerCase().includes('.m3u8')
+            rawType.includes('hls') ||
+            rawType.includes('m3u8') ||
+            url.toLowerCase().includes('.m3u8')
                 ? 'hls'
                 : 'mp4';
 
-        const rawDub = this.pickString(raw, ['dub', 'audio', 'audioName', 'audioLang', 'language', 'lang', 'label', 'name', 'title']);
+        const rawDub = this.pickString(raw, [
+            'dub',
+            'audio',
+            'audioName',
+            'audioLang',
+            'language',
+            'lang',
+            'label',
+            'name',
+            'title'
+        ]);
         const dub = this.normalizeDubLabel(rawDub);
 
-
-        const quality = this.pickNumber(raw, ['quality', 'resolution', 'height', 'res']);
+        const quality = this.pickNumber(raw, [
+            'quality',
+            'resolution',
+            'height',
+            'res'
+        ]);
         const sizeBytes = this.pickNumber(raw, ['sizeBytes', 'size', 'bytes']);
 
         // commented out i think it's better if we leave the quality to unknowm
@@ -271,10 +315,19 @@ export class PeachifyProvider extends BaseProvider {
         //     ?? this.inferQualityFromBandwidth(this.pickNumber(raw, ['bandwidth', 'bitrate', 'bw']));
         // const sizeBytes = this.pickNumber(raw, ['sizeBytes', 'size', 'bytes']);
 
-        const rawHeaders = raw.headers ?? raw.header ?? raw.requestHeaders ?? raw.httpHeaders;
+        const rawHeaders =
+            raw.headers ?? raw.header ?? raw.requestHeaders ?? raw.httpHeaders;
         const headers = this.normalizeHeaders(rawHeaders);
 
-        return { url, dub, type, quality, sizeBytes, headers, provider: providerName };
+        return {
+            url,
+            dub,
+            type,
+            quality,
+            sizeBytes,
+            headers,
+            provider: providerName
+        };
     }
 
     /**
@@ -309,7 +362,9 @@ export class PeachifyProvider extends BaseProvider {
      * rough quality guess when the provider only gives us a bitrate.
      * thresholds are conservative — better to under-label than over-promise.
      */
-    private inferQualityFromBandwidth(bps: number | undefined): number | undefined {
+    private inferQualityFromBandwidth(
+        bps: number | undefined
+    ): number | undefined {
         if (!bps) return undefined;
         if (bps >= 4_000_000) return 1080;
         if (bps >= 2_000_000) return 720;
@@ -318,12 +373,14 @@ export class PeachifyProvider extends BaseProvider {
         return undefined;
     }
 
-
     /**
      * returns the first finite numeric value found among the given keys.
      * also handles string fields that embed a resolution-like number (e.g. "1080p").
      */
-    private pickNumber(obj: Record<string, unknown>, keys: string[]): number | undefined {
+    private pickNumber(
+        obj: Record<string, unknown>,
+        keys: string[]
+    ): number | undefined {
         for (const key of keys) {
             const val = obj[key];
             if (typeof val === 'number' && Number.isFinite(val)) return val;
@@ -356,7 +413,8 @@ export class PeachifyProvider extends BaseProvider {
     private normalizeHeaders(
         raw: Record<string, unknown> | undefined
     ): Record<string, string> | undefined {
-        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw))
+            return undefined;
         const entries = Object.entries(raw)
             .filter(([k, v]) => k.trim().length > 0 && v != null)
             .map(([k, v]): [string, string] => [k, String(v)]);
