@@ -106,7 +106,7 @@ export class PoprProvider extends BaseProvider {
                 })
                     .then(async (res) => {
                         if (res.status !== 200) return null;
-                        const data = await res.json() as VidnestResponse;
+                        const data = (await res.json()) as VidnestResponse;
                         const stream = data?.results?.[0]?.streams?.[0];
                         if (!stream?.url) return null;
 

@@ -2,7 +2,10 @@ function getRandomElement<T>(arr: T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export function generateRandomUserAgent(deviceType?: string, browserType?: string): string {
+export function generateRandomUserAgent(
+    deviceType?: string,
+    browserType?: string
+): string {
     const devices = ['android', 'windows', 'ubuntu'];
     const browsers = ['chrome', 'firefox'];
 

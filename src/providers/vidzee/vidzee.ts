@@ -175,7 +175,8 @@ export class VidZeeProvider extends BaseProvider {
         params: { type: 'movie' | 'tv'; season?: string; episode?: string }
     ): Promise<StreamResponse | null> {
         try {
-            let url = this.PLAYER_URL+`/api/server?id=${tmdbId}&sr=${serverId}`;
+            let url =
+                this.PLAYER_URL + `/api/server?id=${tmdbId}&sr=${serverId}`;
 
             if (params.type === 'tv' && params.season && params.episode) {
                 url += `&ss=${params.season}&ep=${params.episode}`;

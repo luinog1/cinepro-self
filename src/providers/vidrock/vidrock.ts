@@ -58,9 +58,9 @@ export class VidRockProvider extends BaseProvider {
                 let finalUrl: string;
 
                 if (stream.url.includes('hls2.vdrk.site')) {
-                    const secondData = (await this.fetchPage(
-                        stream.url
-                    )) as VidrockCDN[] | null;
+                    const secondData = (await this.fetchPage(stream.url)) as
+                        | VidrockCDN[]
+                        | null;
                     if (!secondData) continue;
 
                     secondData.forEach((obj) => {
@@ -197,7 +197,7 @@ export class VidRockProvider extends BaseProvider {
     private async fetchPage(url: string): Promise<any | null> {
         try {
             const response = await fetch(url, {
-                headers: {...this.HEADERS, Referer: this.BASE_URL},
+                headers: { ...this.HEADERS, Referer: this.BASE_URL },
                 referrer: this.BASE_URL
             });
 

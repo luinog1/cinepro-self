@@ -77,7 +77,7 @@ export class StreamMafiaProvider extends BaseProvider {
                         })
                     ).toString('base64');
 
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 100));
 
             const token: string = await this.getToken();
             if (!token) {
@@ -155,13 +155,16 @@ export class StreamMafiaProvider extends BaseProvider {
         const fallbackAudio = this.extractAudioTrack(api.selected);
 
         // main stream
-        const mainSources = await this.extractSourcesFromApi(api, fallbackAudio);
+        const mainSources = await this.extractSourcesFromApi(
+            api,
+            fallbackAudio
+        );
         sources.push(...mainSources);
 
         // switches in parallel
         if ((api.switches?.length ?? 0) > 0) {
             const switchResults = await Promise.all(
-                api.switches.map(sw => this.resolveSwitch(sw))
+                api.switches.map((sw) => this.resolveSwitch(sw))
             );
 
             for (const result of switchResults) {

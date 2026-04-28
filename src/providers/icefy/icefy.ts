@@ -44,7 +44,9 @@ export class IcefyProvider extends BaseProvider {
                 headers: this.HEADERS
             });
 
-            const data = await response.json() as unknown as { stream: string };
+            const data = (await response.json()) as unknown as {
+                stream: string;
+            };
 
             if (!data?.stream) {
                 throw new Error('No stream URL returned');

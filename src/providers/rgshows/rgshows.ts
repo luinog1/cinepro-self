@@ -118,7 +118,7 @@ export class RgShowsProvider extends BaseProvider {
                 return null;
             }
 
-            return await response.json() as unknown as string;
+            return (await response.json()) as unknown as string;
         } catch (error) {
             return null;
         }
