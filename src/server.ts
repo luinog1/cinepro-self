@@ -60,7 +60,7 @@ async function main() {
             stremioAddons: [
                 {
                     id: 'WebStreamerMBG',
-                    url: 'https://87d6a6ef6b58-webstreamrmbg.baby-beamup.club/manifest.json',
+                    url: 'https://87d6a6ef6b58-webstreamrmbg-dev.baby-beamup.club/manifest.json',
                     enabled: true
                 },
                 {

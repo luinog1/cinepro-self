@@ -7,7 +7,6 @@ import type {
     SourceType,
     Subtitle
 } from '@omss/framework';
-import axios from 'axios';
 import { VidnestResponse } from './popr.types.js';
 
 export class PoprProvider extends BaseProvider {
@@ -102,11 +101,12 @@ export class PoprProvider extends BaseProvider {
 
         const requests = servers.map(
             (server) =>
-                axios
-                    .get<VidnestResponse>(buildUrl(server), {
-                        headers: this.HEADERS
-                    })
-                    .then(({ data }) => {
+                fetch(buildUrl(server), {
+                    headers: this.HEADERS
+                })
+                    .then(async (res) => {
+                        if (res.status !== 200) return null;
+                        const data = (await res.json()) as VidnestResponse;
                         const stream = data?.results?.[0]?.streams?.[0];
                         if (!stream?.url) return null;
 
@@ -199,7 +199,8 @@ export class PoprProvider extends BaseProvider {
      */
     async healthCheck(): Promise<boolean> {
         try {
-            const response = await axios.head(this.BASE_URL, {
+            const response = await fetch(this.BASE_URL, {
+                method: 'HEAD',
                 headers: this.HEADERS
             });
             return response.status === 200;

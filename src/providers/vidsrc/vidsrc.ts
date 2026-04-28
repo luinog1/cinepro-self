@@ -6,7 +6,6 @@ import type {
     Source,
     Subtitle
 } from '@omss/framework';
-import axios from 'axios';
 
 export class VidSrcProvider extends BaseProvider {
     readonly id = 'vidsrc';
@@ -44,34 +43,28 @@ export class VidSrcProvider extends BaseProvider {
         media: ProviderMediaObject
     ): Promise<ProviderResult> {
         try {
-            // Build page URL
             const pageUrl = this.buildPageUrl(media);
 
-            // Fetch page HTML
             const html = await this.fetchPage(pageUrl, media);
             if (!html) {
                 return this.emptyResult('Failed to fetch page', media);
             }
 
-            // Extract second URL
             const secondUrl = this.extractSecondUrl(html);
             if (!secondUrl) {
                 return this.emptyResult('Invalid or expired token', media);
             }
 
-            // Fetch second page HTML
             const secondHtml = await this.fetchPage(secondUrl.url, media);
             if (!secondHtml) {
                 return this.emptyResult('Failed to fetch stream page', media);
             }
 
-            // Extract third URL
             const thirdUrl = this.extractThirdUrl(secondHtml, secondUrl.url);
             if (!thirdUrl) {
                 return this.emptyResult('Failed to extract stream URL', media);
             }
 
-            // Fetch third page HTML
             const thirdHtml = await this.fetchPage(thirdUrl.url, media);
             if (!thirdHtml) {
                 return this.emptyResult(
@@ -88,17 +81,17 @@ export class VidSrcProvider extends BaseProvider {
             const sources: Source[] = m3u8Urls.map((url) => ({
                 url: this.createProxyUrl(url, {
                     ...this.HEADERS,
-                    Referer: 'https://cloudnestra.com/', // Use second URL as referer for the final stream request
-                    Origin: 'https://cloudnestra.com' // Set Origin header to second URL's origin
+                    Referer: 'https://cloudnestra.com/',
+                    Origin: 'https://cloudnestra.com'
                 }),
-                type: 'hls', // m3u8 = HLS streaming
-                quality: `Auto`, // VidSrc does not provide explicit quality labels, so we use a generic one
+                type: 'hls',
+                quality: 'Auto',
                 audioTracks: [
                     {
                         label: 'English',
                         language: 'eng'
                     }
-                ], // No audio track info available
+                ],
                 provider: {
                     id: this.id,
                     name: this.name
@@ -107,11 +100,9 @@ export class VidSrcProvider extends BaseProvider {
 
             return {
                 sources,
-                subtitles: [], // VidSrc does not provide subtitle info in the player config or HTML
+                subtitles: [],
                 diagnostics: []
             };
-
-            // Fetch second URL
         } catch (error) {
             return this.emptyResult(
                 error instanceof Error
@@ -145,7 +136,7 @@ export class VidSrcProvider extends BaseProvider {
                 url = 'https:' + url;
             }
 
-            const response = await axios.get(url, {
+            const response = await fetch(url, {
                 headers: this.HEADERS
             });
 
@@ -153,8 +144,8 @@ export class VidSrcProvider extends BaseProvider {
                 return null;
             }
 
-            return response.data;
-        } catch (error) {
+            return await response.text();
+        } catch {
             return null;
         }
     }
@@ -182,7 +173,6 @@ export class VidSrcProvider extends BaseProvider {
         html: string,
         secondUrl: string
     ): { url: string } | null {
-        // 1. Extract the relative src, e.g. '/prorcp/[path....]'
         const relSrc = html.match(/src:\s*['"]([^'"]+)['"]/i)?.[1];
         if (!relSrc) {
             return null;
@@ -192,7 +182,6 @@ export class VidSrcProvider extends BaseProvider {
             secondUrl = 'https:' + secondUrl;
         }
 
-        // 2. Build absolute URL from secondUrl + relSrc
         let url: string;
         try {
             url = new URL(relSrc, secondUrl).href;
@@ -221,7 +210,7 @@ export class VidSrcProvider extends BaseProvider {
                 url = url.replace(placeholder, domain);
             }
             if (url.includes('{') || url.includes('}')) {
-                return null; // Return null if any placeholder remains unresolved
+                return null;
             }
             return url;
         });
@@ -259,8 +248,8 @@ export class VidSrcProvider extends BaseProvider {
      */
     async healthCheck(): Promise<boolean> {
         try {
-            const response = await axios.head(this.BASE_URL, {
-                timeout: 5000,
+            const response = await fetch(this.BASE_URL, {
+                method: 'HEAD',
                 headers: this.HEADERS
             });
             return response.status === 200;

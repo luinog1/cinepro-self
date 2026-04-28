@@ -7,8 +7,8 @@ import type {
     SubtitleFormat
 } from '@omss/framework';
 import { BaseProvider, type SourceType, type Subtitle } from '@omss/framework';
-import axios from 'axios';
 import { MovieDownloaderResponse, Token } from './02moviedownloader.types.js';
+import { generateRandomUserAgent } from '../../utils/ua.js';
 
 export class MovieDownloader extends BaseProvider {
     readonly id = '02moviedownloader';
@@ -16,8 +16,7 @@ export class MovieDownloader extends BaseProvider {
     readonly enabled = true;
     readonly BASE_URL = 'https://02moviedownloader.site';
     readonly HEADERS = {
-        'User-Agent':
-            'Mozilla/5.0 (X11; U; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.6884.98 Safari/537.36',
+        'User-Agent': '',
         accept: '*/*',
         'accept-language': 'en-US,en;q=0.1',
         'cache-control': 'no-cache',
@@ -50,8 +49,7 @@ export class MovieDownloader extends BaseProvider {
 
     async getToken(media: ProviderMediaObject): Promise<string> {
         const headers = {
-            'User-Agent':
-                'Mozilla/5.0 (X11; U; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.6884.98 Safari/537.36',
+            'User-Agent': this.HEADERS['User-Agent'],
             accept: '*/*',
             'accept-language': 'en-US,en;q=0.7',
             'cache-control': 'no-cache',
@@ -70,7 +68,7 @@ export class MovieDownloader extends BaseProvider {
             'sec-ch-ua-full-version-list':
                 '"(Not(A:Brand";v="99.0.0.0", "Google Chrome";v="134", "Chromium";v="134"',
             'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Linux"',
+            'sec-ch-ua-platform': '"Windows"',
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-origin',
@@ -94,8 +92,8 @@ export class MovieDownloader extends BaseProvider {
      */
     async healthCheck(): Promise<boolean> {
         try {
-            const response = await axios.head(this.BASE_URL, {
-                timeout: 5000,
+            const response = await fetch(this.BASE_URL, {
+                method: 'HEAD',
                 headers: this.HEADERS
             });
             return response.status === 200;
@@ -111,6 +109,7 @@ export class MovieDownloader extends BaseProvider {
         media: ProviderMediaObject
     ): Promise<ProviderResult> {
         try {
+            this.HEADERS['User-Agent'] = generateRandomUserAgent();
             const pageUrl = this.buildPageUrl(media);
 
             const token = await this.getToken(media);
@@ -277,7 +276,6 @@ export class MovieDownloader extends BaseProvider {
                     ...this.HEADERS,
                     accept: 'application/json',
                     'x-session-token': token,
-                    origin: this.BASE_URL,
                     referer: refererUrl
                 }
             });

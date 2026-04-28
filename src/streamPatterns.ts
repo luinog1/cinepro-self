@@ -10,5 +10,6 @@ export const streamPatterns: RegExp[] = [
     /illimitableinkwell\.site/,
     /frostcomet5\.pro/,
     /(epimetheus63|earth14|pandora20)\.workers\.dev/, // streammafia's workers.dev proxy domains
-    /tiktokcdn\.com/
+    /tiktokcdn\.com/,
+    /hlmv\.tripplestream\.online/
 ];

@@ -5,7 +5,6 @@ import type {
     ProviderResult,
     Source
 } from '@omss/framework';
-import axios from 'axios';
 import { decrypt } from './decrypt.js';
 import type {
     ApiResponse,
@@ -64,7 +63,7 @@ export class Fmovies4U extends BaseProvider {
                     ? `/api/movie/${media.tmdbId}`
                     : `/api/tv/${media.tmdbId}/${params.season}/${params.episode}`;
 
-            const request = await axios.get<string>(
+            const request = await fetch(
                 `${this.BASE_URL}${path}?_cb=${Date.now()}`,
                 {
                     headers: {
@@ -74,7 +73,7 @@ export class Fmovies4U extends BaseProvider {
                 }
             );
 
-            const encryptedText = request.data;
+            const encryptedText = await request.text();
             if (!encryptedText) {
                 return this.emptyResult(
                     'Failed to fetch encrypted sources',
@@ -229,8 +228,8 @@ export class Fmovies4U extends BaseProvider {
      */
     async healthCheck(): Promise<boolean> {
         try {
-            const response = await axios.head(this.BASE_URL, {
-                timeout: 5000,
+            const response = await fetch(this.BASE_URL, {
+                method: 'HEAD',
                 headers: this.HEADERS
             });
             return response.status === 200;

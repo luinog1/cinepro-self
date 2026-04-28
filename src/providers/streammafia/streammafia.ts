@@ -9,25 +9,26 @@ import type {
     SourceType
 } from '@omss/framework';
 import { BaseProvider } from '@omss/framework';
-import axios from 'axios';
-import { ApiResponse, EncryptedPayload } from './streammafia.types.js';
+import { ApiResponse, EncryptedPayload, Switch } from './streammafia.types.js';
 import { decryptStreamMafia } from './decrypt.js';
+import { generateRandomUserAgent } from '../../utils/ua.js';
 
 export class StreamMafiaProvider extends BaseProvider {
     readonly id = 'streammafia';
     readonly name = 'MafiaEmbed';
     readonly enabled = true;
 
-    readonly BASE_URL = 'https://embedmafia.in';
-    readonly EMBED_URL = 'https://nhd.streammafia.to';
+    readonly BASE_URL = 'https://sf.streammafia.to';
 
     readonly HEADERS = {
-        'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/150 Safari/537.36',
+        'User-Agent': '',
         Accept: 'application/json, text/javascript, */*; q=0.01',
         'Accept-Language': 'en-US,en;q=0.9',
-        Referer: this.EMBED_URL + '/',
-        Origin: this.EMBED_URL
+        Referer: this.BASE_URL + '/',
+        Origin: this.BASE_URL,
+        Cookie: '',
+        'x-api-token': '',
+        'x-content-id': ''
     };
 
     readonly capabilities: ProviderCapabilities = {
@@ -44,7 +45,10 @@ export class StreamMafiaProvider extends BaseProvider {
 
     async healthCheck(): Promise<boolean> {
         try {
-            const res = await axios.head(this.EMBED_URL);
+            const res = await fetch(this.BASE_URL, {
+                method: 'HEAD',
+                headers: this.HEADERS
+            });
             return res.status === 200;
         } catch {
             return false;
@@ -55,6 +59,33 @@ export class StreamMafiaProvider extends BaseProvider {
         media: ProviderMediaObject
     ): Promise<ProviderResult> {
         try {
+            this.HEADERS['User-Agent'] = generateRandomUserAgent();
+            this.HEADERS['x-content-id'] = media.tmdbId.toString();
+
+            const cookie: string = await this.getSessionCookie();
+            if (!cookie) {
+                return this.emptyResult('Failed to retrieve session cookie');
+            }
+
+            this.HEADERS.Cookie =
+                cookie.split(';')[0] ||
+                'vid_session=' +
+                    Buffer.from(
+                        JSON.stringify({
+                            id: media.tmdbId,
+                            iat: Math.floor(Date.now() / 1000)
+                        })
+                    ).toString('base64');
+
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            const token: string = await this.getToken();
+            if (!token) {
+                return this.emptyResult('Failed to retrieve access token');
+            }
+
+            this.HEADERS['x-api-token'] = token;
+
             const url = this.buildPageUrl(media);
             const encrypted = await this.fetchPage(url);
 
@@ -71,6 +102,33 @@ export class StreamMafiaProvider extends BaseProvider {
         }
     }
 
+    private async getToken(): Promise<string> {
+        try {
+            const res = await fetch(`${this.BASE_URL}/api/token`, {
+                headers: { ...this.HEADERS },
+                referrer: this.BASE_URL + '/'
+            });
+            if (res.status !== 200) return '';
+            const data = (await res.json()) as { token?: string };
+            return data.token || '';
+        } catch {
+            return '';
+        }
+    }
+
+    private async getSessionCookie(): Promise<string> {
+        try {
+            const res = await fetch(this.BASE_URL + '/api/session', {
+                method: 'POST',
+                headers: this.HEADERS,
+                body: null
+            });
+            return res.headers.get('Set-Cookie') || '';
+        } catch {
+            return '';
+        }
+    }
+
     private buildPageUrl(media: ProviderMediaObject): string {
         if (media.type === 'movie') {
             return `${this.BASE_URL}/api/movie/?id=${media.tmdbId}`;
@@ -81,10 +139,9 @@ export class StreamMafiaProvider extends BaseProvider {
 
     private async fetchPage(url: string): Promise<EncryptedPayload | null> {
         try {
-            const res = await axios.get(url, { headers: this.HEADERS });
-            return typeof res.data === 'string'
-                ? JSON.parse(res.data)
-                : res.data;
+            const res = await fetch(url, { headers: this.HEADERS });
+            if (res.status !== 200) return null;
+            return (await res.json()) as EncryptedPayload;
         } catch {
             return null;
         }
@@ -97,14 +154,82 @@ export class StreamMafiaProvider extends BaseProvider {
 
         const fallbackAudio = this.extractAudioTrack(api.selected);
 
+        // main stream
+        const mainSources = await this.extractSourcesFromApi(
+            api,
+            fallbackAudio
+        );
+        sources.push(...mainSources);
+
+        // switches in parallel
+        if ((api.switches?.length ?? 0) > 0) {
+            const switchResults = await Promise.all(
+                api.switches.map((sw) => this.resolveSwitch(sw))
+            );
+
+            for (const result of switchResults) {
+                sources.push(...result);
+            }
+        }
+
+        if (sources.length === 0) {
+            diagnostics.push({
+                code: 'PROVIDER_ERROR',
+                message: `${this.name}: No playable sources found`,
+                field: '',
+                severity: 'error'
+            });
+        }
+
+        // dedupe
+        const seen = new Set<string>();
+        const deduped: Source[] = [];
+
+        for (const s of sources) {
+            if (seen.has(s.url)) continue;
+            seen.add(s.url);
+            deduped.push(s);
+        }
+
+        return { sources: deduped, subtitles, diagnostics };
+    }
+
+    private async resolveSwitch(sw: Switch): Promise<Source[]> {
+        try {
+            const headers = { ...this.HEADERS };
+
+            const url = `${this.BASE_URL}/api/source/${sw.file_code}`;
+            const encrypted = await this.fetchPage(url);
+
+            if (!encrypted) return [];
+
+            const api = decryptStreamMafia(encrypted);
+
+            const fallbackAudio: AudioTrack = {
+                language: sw.lang_code?.toLowerCase() || 'unknown',
+                label: sw.lang || sw.lang_code || 'Unknown'
+            };
+
+            return await this.extractSourcesFromApi(api, fallbackAudio);
+        } catch {
+            return [];
+        }
+    }
+
+    private async extractSourcesFromApi(
+        api: ApiResponse,
+        fallbackAudio: AudioTrack
+    ): Promise<Source[]> {
+        const sources: Source[] = [];
+
         if (api.stream?.hls_streaming) {
             const parsed = await this.parseHLS(api.stream.hls_streaming);
 
             sources.push({
                 url: this.createProxyUrl(api.stream.hls_streaming, {
                     ...this.HEADERS,
-                    Referer: this.EMBED_URL + '/',
-                    Origin: this.EMBED_URL
+                    Referer: this.BASE_URL + '/',
+                    Origin: this.BASE_URL
                 }),
                 type: 'hls',
                 quality: parsed.quality || 'auto',
@@ -117,23 +242,14 @@ export class StreamMafiaProvider extends BaseProvider {
                     name: this.name
                 }
             });
-
-            if (parsed.audioTracks.length === 0) {
-                diagnostics.push({
-                    code: 'LANGUAGE_INFERRED',
-                    message: `${this.name}: Audio language inferred from selected payload`,
-                    field: '',
-                    severity: 'info'
-                });
-            }
         }
 
         for (const download of api.stream?.download ?? []) {
             sources.push({
                 url: this.createProxyUrl(download.url, {
                     ...this.HEADERS,
-                    Referer: this.EMBED_URL + '/',
-                    Origin: this.EMBED_URL
+                    Referer: this.BASE_URL + '/',
+                    Origin: this.BASE_URL
                 }),
                 type: this.inferSourceType(download.url),
                 quality: this.normalizeQuality(download.quality, 'unknown'),
@@ -145,25 +261,7 @@ export class StreamMafiaProvider extends BaseProvider {
             });
         }
 
-        if (!api.stream?.hls_streaming && !api.stream?.download?.length) {
-            diagnostics.push({
-                code: 'PROVIDER_ERROR',
-                message: `${this.name}: No playable sources found in API response`,
-                field: '',
-                severity: 'error'
-            });
-        }
-
-        if ((api.switches?.length ?? 0) > 0) {
-            diagnostics.push({
-                code: 'PARTIAL_SCRAPE',
-                message: `${this.name}: Alternate switches were returned but only the selected stream was mapped`,
-                field: 'switches',
-                severity: 'info'
-            });
-        }
-
-        return { sources, subtitles, diagnostics };
+        return sources;
     }
 
     private extractAudioTrack(selected: ApiResponse['selected']): AudioTrack {
@@ -177,10 +275,7 @@ export class StreamMafiaProvider extends BaseProvider {
             selected?.lang_code?.toUpperCase() ||
             'Unknown';
 
-        return {
-            language,
-            label
-        };
+        return { language, label };
     }
 
     private async parseHLS(url: string): Promise<{
@@ -188,14 +283,14 @@ export class StreamMafiaProvider extends BaseProvider {
         audioTracks: AudioTrack[];
     }> {
         try {
-            const res = await axios.get(url, {
+            const res = await fetch(url, {
                 headers: {
                     ...this.HEADERS,
-                    Referer: this.EMBED_URL + '/'
+                    Referer: this.BASE_URL + '/'
                 }
             });
 
-            const content: string = res.data;
+            const content: string = await res.text();
             const variants = this.parseVariants(content);
             const audioTracks = this.parseAudioTracks(content);
 
@@ -242,10 +337,7 @@ export class StreamMafiaProvider extends BaseProvider {
                 'unknown';
             const label = line.match(/NAME="([^"]+)"/)?.[1] ?? language;
 
-            tracks.push({
-                language,
-                label
-            });
+            tracks.push({ language, label });
         }
 
         return tracks;
