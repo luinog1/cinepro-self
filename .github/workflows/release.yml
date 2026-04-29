@@ -1,59 +1,43 @@
 name: Release
 
 on:
-  workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/docker-build.yml'
-      - 'Dockerfile'
-      - 'compose.yml'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.json'
-      - 'src/**'
-      - '.env.example'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'Dockerfile'
-      - 'compose.yml'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.json'
-      - 'src/**'
-      - '.env.example'
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  # Human‑readable description used for OCI annotations / GHCR package description
   IMAGE_DESCRIPTION: >
     CinePro Core is the central scraping and streaming engine of the CinePro
     ecosystem. It exposes an OMSS-compliant HTTP API for resolving movie and TV
     show streams from multiple providers.
 
 concurrency:
-  group: docker-build-${{ github.ref }}
+  group: docker-build-${{ github.event.workflow_run.head_branch || github.ref }}
   cancel-in-progress: true
 
 jobs:
   prepare:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     outputs:
-      run_date: ${{ steps.meta.outputs.run_date }}
       app_version: ${{ steps.meta.outputs.app_version }}
       arch_tag_amd64: ${{ steps.meta.outputs.arch_tag_amd64 }}
       arch_tag_arm64: ${{ steps.meta.outputs.arch_tag_arm64 }}
-      created: ${{ steps.meta.outputs.created }}   # NEW
+      created: ${{ steps.meta.outputs.created }}
     steps:
       - id: meta
         run: |
-          RUN_DATE="$(date +%Y%m%d)"
-          APP_VERSION="main-${RUN_DATE}-${{ github.run_number }}"
+          SHA="${{ github.event.workflow_run.head_sha || github.sha }}"
+          SHORT_SHA="${SHA::7}"
+          APP_VERSION="main-${SHORT_SHA}"
           CREATED="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           {
-            echo "run_date=${RUN_DATE}"
             echo "app_version=${APP_VERSION}"
             echo "arch_tag_amd64=${APP_VERSION}-amd64"
             echo "arch_tag_arm64=${APP_VERSION}-arm64"
@@ -117,7 +101,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=amd64
           build-args: |
             VERSION=${{ needs.prepare.outputs.app_version }}
-            REVISION=${{ github.sha }}
+            REVISION=${{ github.event.workflow_run.head_sha }}
             CREATED=${{ needs.prepare.outputs.created }}
             DESCRIPTION=${{ env.IMAGE_DESCRIPTION }}
             SOURCE=${{ github.server_url }}/${{ github.repository }}
@@ -159,7 +143,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=arm64
           build-args: |
             VERSION=${{ needs.prepare.outputs.app_version }}
-            REVISION=${{ github.sha }}
+            REVISION=${{ github.event.workflow_run.head_sha }}
             CREATED=${{ needs.prepare.outputs.created }}
             DESCRIPTION=${{ env.IMAGE_DESCRIPTION }}
             SOURCE=${{ github.server_url }}/${{ github.repository }}
@@ -267,7 +251,7 @@ jobs:
           done <<< "$HASHES"
 
           NOTES="## Release $CURRENT_TAG"$'\n\n'
-          NOTES="${NOTES}Released on ${{ needs.prepare.outputs.run_date }}. This release includes the following changes. [Version History](https://docs.cinepro.cc/core/versions):"$'\n\n'
+          NOTES="${NOTES}Released at commit [\`${{ needs.prepare.outputs.app_version }}\`](https://github.com/${{ github.repository }}/commit/${{ github.event.workflow_run.head_sha || github.sha }}). ..."
 
           if [ -n "$BREAKING" ]; then
             NOTES="${NOTES}### ⚠️ Breaking Changes"$'\n'"$(echo -e "$BREAKING")"$'\n'
