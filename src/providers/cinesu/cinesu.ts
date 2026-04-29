@@ -5,17 +5,17 @@ import type {
     ProviderResult
 } from '@omss/framework';
 
-export class IcefyProvider extends BaseProvider {
-    readonly id = 'Icefy';
-    readonly name = 'Icefy';
+export class CineSuProvider extends BaseProvider {
+    readonly id = 'CineSu';
+    readonly name = 'CineSu';
     readonly enabled = true;
-    readonly BASE_URL = 'https://streams.icefy.top';
+    readonly BASE_URL = 'https://cine.su';
     readonly HEADERS = {
         'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150 Safari/537.36',
         Accept: 'application/json, text/javascript, */*; q=0.01',
         'Accept-Language': 'en-US,en;q=0.9',
-        Referer: this.BASE_URL,
+        Referer: this.BASE_URL + '/en/watch',
         Origin: this.BASE_URL
     };
 
@@ -24,45 +24,28 @@ export class IcefyProvider extends BaseProvider {
     };
 
     async getMovieSources(media: ProviderMediaObject): Promise<ProviderResult> {
-        return this.getSources(media);
+        const streamurl = this.buildManifestUrl(media);
+        const verify = await this.testUrl(streamurl);
+        if (!verify) {
+            return this.emptyResult('Stream URL is not accessible');
+        }
+        return this.getSources(streamurl);
     }
 
     async getTVSources(media: ProviderMediaObject): Promise<ProviderResult> {
-        return this.getSources(media);
+        const streamurl = this.buildManifestUrl(media);
+        const verify = await this.testUrl(streamurl);
+        if (!verify) {
+            return this.emptyResult('Stream URL is not accessible');
+        }
+        return this.getSources(streamurl);
     }
 
     /**
      * Core logic
      */
-    private async getSources(
-        media: ProviderMediaObject
-    ): Promise<ProviderResult> {
+    private async getSources(streamUrl: string): Promise<ProviderResult> {
         try {
-            const apiUrl = this.buildApiUrl(media);
-
-            const response = await fetch(apiUrl, {
-                headers: this.HEADERS
-            });
-
-            if (!response.ok) {
-                throw new Error(
-                    `API request failed with status ${response.status}` +
-                        (response.status === 403
-                            ? ` (probably blocked by Cloudflare. If you are running it locally, try going to ${this.BASE_URL} and solving the CAPTCHA manually. That should fix it.)`
-                            : '')
-                );
-            }
-
-            const data = (await response.json()) as unknown as {
-                stream: string;
-            };
-
-            if (!data?.stream) {
-                throw new Error('No stream URL returned');
-            }
-
-            const streamUrl: string = data.stream;
-
             return {
                 sources: [
                     {
@@ -88,35 +71,42 @@ export class IcefyProvider extends BaseProvider {
             return this.emptyResult(
                 error instanceof Error
                     ? error.message
-                    : 'Unknown provider error',
-                media
+                    : 'Unknown provider error'
             );
         }
     }
 
     /**
-     * Build API URL
+     * Test if URL is accessible
      */
-    private buildApiUrl(media: ProviderMediaObject): string {
+    private async testUrl(url: string): Promise<boolean> {
+        try {
+            const res = await fetch(url, {
+                method: 'HEAD',
+                headers: this.HEADERS
+            });
+            return res.status === 200;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Build Manifest URL
+     */
+    private buildManifestUrl(media: ProviderMediaObject): string {
         if (media.type === 'movie') {
-            return `${this.BASE_URL}/movie/${media.tmdbId}`;
+            return `${this.BASE_URL}/v1/stream/master/movie/${media.tmdbId}.m3u8`;
         }
 
         if (media.type === 'tv') {
-            if (!media.s || !media.e) {
-                throw new Error('Missing season or episode');
-            }
-
-            return `${this.BASE_URL}/tv/${media.tmdbId}/${media.s}/${media.e}`;
+            return `${this.BASE_URL}/v1/stream/master/tv/${media.tmdbId}/${media.s}/${media.e}.m3u8`;
         }
 
         throw new Error('Unsupported media type');
     }
 
-    private emptyResult(
-        message: string,
-        media: ProviderMediaObject
-    ): ProviderResult {
+    private emptyResult(message: string): ProviderResult {
         return {
             sources: [],
             subtitles: [],

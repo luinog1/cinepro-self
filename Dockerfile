@@ -27,6 +27,8 @@ LABEL org.opencontainers.image.title="CinePro Core" \
       org.opencontainers.image.created="${CREATED}" \
       org.opencontainers.image.source="${SOURCE}"
 
+LABEL org.opencontainers.image.description="CinePro Core is the central scraping and streaming engine of the CinePro ecosystem. It exposes an OMSS-compliant HTTP API for resolving movie and TV show streams from multiple providers."
+
 ARG NODE_ENV=production
 ARG PORT=3000
 ARG CACHE_TYPE=memory
