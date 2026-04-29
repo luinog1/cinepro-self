@@ -44,9 +44,7 @@ export class CineSuProvider extends BaseProvider {
     /**
      * Core logic
      */
-    private async getSources(
-        streamUrl: string
-    ): Promise<ProviderResult> {
+    private async getSources(streamUrl: string): Promise<ProviderResult> {
         try {
             return {
                 sources: [
@@ -108,9 +106,7 @@ export class CineSuProvider extends BaseProvider {
         throw new Error('Unsupported media type');
     }
 
-    private emptyResult(
-        message: string
-    ): ProviderResult {
+    private emptyResult(message: string): ProviderResult {
         return {
             sources: [],
             subtitles: [],

@@ -44,6 +44,15 @@ export class IcefyProvider extends BaseProvider {
                 headers: this.HEADERS
             });
 
+            if (!response.ok) {
+                throw new Error(
+                    `API request failed with status ${response.status}` +
+                        (response.status === 403
+                            ? ` (probably blocked by Cloudflare. If you are running it locally, try going to ${this.BASE_URL} and solving the CAPTCHA manually. That should fix it.)`
+                            : '')
+                );
+            }
+
             const data = (await response.json()) as unknown as {
                 stream: string;
             };
