@@ -251,7 +251,7 @@ jobs:
           done <<< "$HASHES"
 
           NOTES="## Release $CURRENT_TAG"$'\n\n'
-          NOTES="${NOTES}Released at commit [\`${{ needs.prepare.outputs.app_version }}\`](https://github.com/${{ github.repository }}/commit/${{ github.event.workflow_run.head_sha || github.sha }}). ..."
+          NOTES="${NOTES}Release commit: [\`${{ github.event.workflow_run.head_sha || github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.event.workflow_run.head_sha || github.sha }})."$'\n\n'"
 
           if [ -n "$BREAKING" ]; then
             NOTES="${NOTES}### ⚠️ Breaking Changes"$'\n'"$(echo -e "$BREAKING")"$'\n'
@@ -277,25 +277,12 @@ jobs:
             NOTES="${NOTES}### 📦 Other Changes"$'\n'"$(echo -e "$OTHERS")"$'\n'
           fi
 
-          # Append your Docker image info + quick start
-          NOTES="${NOTES}"$'\n'"## Docker images"$'\n\n'
-          NOTES="${NOTES}The following multi-arch images (linux/amd64, linux/arm64) were published to GitHub Container Registry:"$'\n\n'
-          NOTES="${NOTES}- ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:${{ needs.prepare.outputs.app_version }}"$'\n'
-          NOTES="${NOTES}- ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:main"$'\n'
-          NOTES="${NOTES}- ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest"$'\n\n'
-
           NOTES="${NOTES}## Quick start"$'\n\n'
-          NOTES="${NOTES}Pull the latest image:"$'\n\n'
+          NOTES="${NOTES}Start the latest version:"$'\n\n'
           NOTES="${NOTES}\`\`\`bash"$'\n'
-          NOTES="${NOTES}docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest"$'\n'
+          NOTES="${NOTES}docker run --name cinepro-core-${{ needs.prepare.outputs.app_version }} -p 3000:3000 -e TMDB_API_KEY=your-tmdb-key ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest"$'\n'
           NOTES="${NOTES}\`\`\`"$'\n\n'
 
-          NOTES="${NOTES}Run the newest API locally:"$'\n\n'
-          NOTES="${NOTES}\`\`\`bash"$'\n'
-          NOTES="${NOTES}docker run -p 3000:3000 \\"$'\n'
-          NOTES="${NOTES}  -e TMDB_API_KEY=your-tmdb-key \\"$'\n'
-          NOTES="${NOTES}  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest"$'\n'
-          NOTES="${NOTES}\`\`\`"$'\n'
           NOTES="${NOTES}## For more details, check the [CinePro documentation](https://docs.cinepro.cc) and the [Version History](https://docs.cinepro.cc/core/versions)."
 
           {
