@@ -17,9 +17,7 @@ export class StreamMafiaProvider extends BaseProvider {
     readonly id = 'streammafia';
     readonly name = 'MafiaEmbed';
     readonly enabled = true;
-
-    readonly BASE_URL = 'https://sf.streammafia.to';
-
+    readonly BASE_URL = 'https://solve.streammafia.to';
     readonly HEADERS = {
         'User-Agent': '',
         Accept: 'application/json, text/javascript, */*; q=0.01',

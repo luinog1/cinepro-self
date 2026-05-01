@@ -18,7 +18,8 @@ import type {
     allmoviesResponse,
     onehdResponse,
     hollymoviehdResponse,
-    vidlinkResponse
+    vidlinkResponse,
+    purstreamResponse
 } from './vidnest.types.js';
 
 export class VidNestProvider extends BaseProvider {
@@ -145,6 +146,19 @@ export class VidNestProvider extends BaseProvider {
                     label: c.language,
                     format: this.inferSubtitleFormat(c.url)
                 }))
+        },
+
+        purstream: {
+            parse: (d) => decrypt<purstreamResponse>(d),
+            mapSources: (root) =>
+                root.sources.map((s) => ({
+                    url: this.createProxyUrl(s.url, this.HEADERS),
+                    type: this.inferSourceType(s.format, s.url),
+                    quality: s.name,
+                    audioTracks: [{ language: 'French', label: 'fr' }],
+                    provider: { id: this.id, name: this.name }
+                })),
+            mapSubtitles: () => []
         }
     };
 
