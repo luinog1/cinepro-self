@@ -146,11 +146,11 @@ export class PeachifyProvider extends BaseProvider {
         const sources: ProviderResult['sources'] = parsed.map((s) => ({
             url: this.createProxyUrl(s.url, s.headers ?? this.HEADERS),
             type: s.type,
-            quality: s.quality ? `${s.quality}p` : 'unknown',
+            quality: s.quality?.toString() ?? 'Auto',
             audioTracks: [
                 {
                     label: s.dub,
-                    language: 'en'
+                    language: s.dub.toLowerCase().substring(0, 2)
                 }
             ],
             provider: {
@@ -274,7 +274,7 @@ export class PeachifyProvider extends BaseProvider {
         const url = raw.url ?? raw.file ?? raw.src;
         if (!url) return null;
 
-        const label = raw.label ?? raw.name ?? raw.language ?? 'Unknown';
+        const label = raw.label ?? raw.name ?? raw.language ?? 'Auto';
         const lang = raw.langCode ?? raw.lang ?? raw.language;
 
         return { url, label, lang, display: label, provider: providerName };

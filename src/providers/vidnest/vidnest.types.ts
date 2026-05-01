@@ -99,6 +99,19 @@ export interface deltaStream {
     url: string;
 }
 
+// purstream (french)
+export interface purstreamResponse {
+    purstream_id: number;
+    sources: purstreamSource[];
+    title: string;
+}
+
+export interface purstreamSource {
+    format: string;
+    name: string;
+    url: string;
+}
+
 // SERVER MAP
 export interface ServerMap {
     allmovies: allmoviesResponse;
@@ -106,6 +119,7 @@ export interface ServerMap {
     vidlink: vidlinkResponse;
     onehd: onehdResponse;
     klikxxi: klikxxiResponse;
+    purstream: purstreamResponse;
 }
 
 // only servers we actually support (others will be skipped)
