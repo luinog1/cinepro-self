@@ -101,17 +101,16 @@ export interface deltaStream {
 
 // purstream (french)
 export interface purstreamResponse {
-  purstream_id: number
-  sources: purstreamSource[]
-  title: string
+    purstream_id: number;
+    sources: purstreamSource[];
+    title: string;
 }
 
 export interface purstreamSource {
-  format: string
-  name: string
-  url: string
+    format: string;
+    name: string;
+    url: string;
 }
-
 
 // SERVER MAP
 export interface ServerMap {
