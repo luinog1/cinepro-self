@@ -61,7 +61,7 @@ const VIDEASY_SERVERS: readonly VideasyServer[] = [
 export class VideasyProvider extends BaseProvider {
     readonly id = 'Videasy';
     readonly name = 'Videasy';
-    readonly enabled = true;
+    readonly enabled = false;
     readonly BASE_URL = 'https://api.videasy.net';
     readonly HEADERS = {
         'User-Agent':
